@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import logo from './logo.svg';
 import styles from './App.module.css';
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router';
 import Welcome from './components/Welcome/Welcome';
-import Bookings from "./Bookings";
 import '@mantine/core/styles.css';
 import { Burger, Container, Group } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
@@ -15,19 +14,19 @@ const links = [
   { link: '/bookings', label: 'My Bookings' },
 ];
 
+function Bookings() {
 
-function App() {
-  const [hotelData, setText] = useState(0);
-
-  //for header
+  // for header
   const [opened, { toggle }] = useDisclosure(false);
   const [active, setActive] = useState(links[0].link);
+  const location = useLocation();
+  const currentPath = location.pathname;
   const items = links.map((link) => (
     <a
       key={link.label}
       href={link.link}
       className={classes.link}
-      data-active={active === link.link || undefined}
+      data-active={currentPath === link.link || undefined}
       onClick={(event) => {
         // event.preventDefault();
         setActive(link.link);
@@ -37,17 +36,6 @@ function App() {
     </a>
   ));
 
-  const getHotel = async () => {
-    try {
-      const response = await fetch('/api/getHotels');
-      const data = await response.json();
-      setText(data);
-    } catch (error) {
-      console.error('Error calling backend:', error);
-      setText('Error!');
-    }
-  };
-
   return <MantineProvider>
     {/* header */}
     <header className={classes.header}>
@@ -55,6 +43,7 @@ function App() {
         <Group gap={5} visibleFrom="xs">
           {items}
         </Group>
+
         <Burger opened={opened} onClick={toggle} hiddenFrom="xs" size="sm" />
       </Container>
     </header>
@@ -62,19 +51,31 @@ function App() {
     {/* rest of code */}
     <div className={styles.App}>
       <header className={styles['App-header']}>
+        <img src={logo} className={styles['App-logo']} alt="logo" />
+        <Welcome />
+
         <p>
-          <Button variant="filled" onClick={getHotel}>Search Hotels</Button>
+          <a
+            className={styles['App-link']}
+            href="https://reactjs.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Learn React
+          </a>
+          {' | '}
+          <a
+            className={styles['App-link']}
+            href="https://vitejs.dev/guide/features.html"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Vite Docs
+          </a>
         </p>
-        <ol>
-          {Array.isArray(hotelData) && hotelData.map((hotel, index) => (
-            <li key={index}>
-              {hotel.name}, {hotel.address}
-            </li>
-          ))}
-        </ol>
       </header>
     </div>
   </MantineProvider>;
 }
 
-export default App;
+export default Bookings;
