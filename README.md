@@ -8,7 +8,7 @@
 npm install
 ```
 
-3. Install dependencies
+3. Update dependencies
 ```bash
 npm update
 ```
