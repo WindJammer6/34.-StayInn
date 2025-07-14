@@ -24,12 +24,12 @@ const RoomDetails = () => {
           params: {
             destination_id: searchParams.get("destination_id") || "WD0M",
             checkin: searchParams.get("checkin") || "2025-07-14",
-            checkout: searchParams.get("checkout")|| '2025-07-15',
-            lang: searchParams.get("lang")|| 'en_US',
-            currency: searchParams.get("currency")|| 'SGD',
-            country_code: searchParams.get("country_code")|| 'SG',
-            guests: searchParams.get("guests")|| '2',
-            partner_id: "1"
+            checkout: searchParams.get("checkout") || "2025-07-15",
+            lang: searchParams.get("lang") || "en_US",
+            currency: searchParams.get("currency") || "SGD",
+            country_code: searchParams.get("country_code") || "SG",
+            guests: searchParams.get("guests") || "2",
+            partner_id: "1",
           },
         }
       );
@@ -67,7 +67,9 @@ const RoomDetails = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
         <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
-        <p className="text-muted-foreground mb-6">{error || "Hotel data unavailable."}</p>
+        <p className="text-muted-foreground mb-6">
+          {error || "Hotel data unavailable."}
+        </p>
         <Button onClick={() => navigate(-1)} variant="default">
           <ArrowLeft className="w-4 h-4 mr-2" /> Go Back
         </Button>
@@ -79,25 +81,7 @@ const RoomDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-              <ArrowLeft className="w-4 h-4 mr-2" /> Back
-            </Button>
-            <div className="flex items-center gap-2">
-              <Plane className="w-6 h-6 text-primary" />
-              <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                TravelBooking
-              </span>
-            </div>
-          </div>
-          <Button variant="outline" size="sm">Sign In</Button>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 space-y-6">
+      <main className="pt-30 container mx-auto px-4 py-8 space-y-6">
         {/* Hotel Summary */}
         <Card>
           <CardHeader>
@@ -137,9 +121,7 @@ const RoomDetails = () => {
             <CardTitle>Hotel Details</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground mb-2">
-              Hotel ID: diH7
-            </p>
+            <p className="text-muted-foreground mb-2">Hotel ID: diH7</p>
             {hotelData.completed ? (
               <div className="flex items-center gap-2">
                 <Check className="w-5 h-5 text-green-500" />
@@ -167,14 +149,21 @@ const RoomDetails = () => {
                     <CardContent className="p-4">
                       <div className="flex justify-between items-center">
                         <div>
-                          <h3 className="font-semibold">{room.roomDescription || "Room"}</h3>
-                          <p className="text-sm text-muted-foreground">{room.bedConfiguration || "Bed info not available"}</p>
+                          <h3 className="font-semibold">
+                            {room.roomDescription || "Room"}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {room.bedConfiguration || "Bed info not available"}
+                          </p>
                         </div>
                         <div className="text-right">
                           <span className="text-lg font-bold text-primary">
-                            {room.currency || "$"}{room.price || "N/A"}
+                            {room.currency || "$"}
+                            {room.price || "N/A"}
                           </span>
-                          <p className="text-xs text-muted-foreground">per night</p>
+                          <p className="text-xs text-muted-foreground">
+                            per night
+                          </p>
                         </div>
                       </div>
                     </CardContent>
@@ -182,7 +171,9 @@ const RoomDetails = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground text-center py-8">No rooms available for your selected dates.</p>
+              <p className="text-muted-foreground text-center py-8">
+                No rooms available for your selected dates.
+              </p>
             )}
           </CardContent>
         </Card>
