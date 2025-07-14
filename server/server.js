@@ -9,7 +9,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.get("/api/hotels/:id/prices", async (req, res) => {
+app.get("/api/hotels/:id/price", async (req, res) => {
   const hotelId = req.params.id;
   const {
     destination_id,
@@ -19,9 +19,10 @@ app.get("/api/hotels/:id/prices", async (req, res) => {
     lang,
     currency,
     country_code,
+    partner_id = 1,
   } = req.query;
 
-  const ascendaUrl = `https://hotelapi.loyalty.dev/api/hotels/${hotelId}/price?destination_id=${destination_id}&checkin=${checkin}&checkout=${checkout}&lang=${lang}&currency=${currency}&country_code=${country_code}&guests=${guests}&partner_id=1`;
+  const ascendaUrl = `https://hotelapi.loyalty.dev/api/hotels/${hotelId}/price?destination_id=${destination_id}&checkin=${checkin}&checkout=${checkout}&lang=${lang}&currency=${currency}&country_code=${country_code}&guests=${guests}&partner_id=${partner_id}`;
 
   try {
     const response = await axios.get(ascendaUrl);
