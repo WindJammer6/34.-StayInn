@@ -1,4 +1,3 @@
-// src/components/HotelList.jsx
 import React from "react";
 import { Link } from "react-router-dom";   // ⬅ make cards clickable
 import starFilled from "../assets/starIconFilled.svg";
