@@ -1,22 +1,22 @@
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import HomePage from "./Home";
-import AboutPage from "./About";
-import RoomDetails from "./RoomDetails";
+import React from "react";
+import Navbar from "./components/Navbar";
+import { Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import Hotels from "./pages/Hotels";
+import RoomDetails from "./pages/RoomDetails";
 
 const App = () => {
   return (
-    <Router>
-      <nav>
-        <Link to="/">Home</Link> | <Link to="/about">About</Link> |{" "}
-        <Link to="/room">Room</Link>
-      </nav>
-
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/room" element={<RoomDetails />} />
-      </Routes>
-    </Router>
+    <div>
+      <Navbar />
+      <div className="min-h-[70vh]">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/rooms" element={<Hotels />} />
+          <Route path="/detail" element={<RoomDetails />} />
+        </Routes>
+      </div>
+    </div>
   );
 };
 

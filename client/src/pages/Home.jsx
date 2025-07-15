@@ -1,10 +1,12 @@
+import React from 'react'
+import Hero from '../components/Hero'
+
 const Home = () => {
   return (
-    <main>
-      <h1>Home Page</h1>
-      <p>Welcome to the homepage!</p>
-    </main>
-  );
-};
+    <>
+      <Hero />
+    </>
+  )
+}
 
-export default Home;
+export default Home
