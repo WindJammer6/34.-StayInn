@@ -5,7 +5,7 @@ import { ArrowLeft, Plane, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import parse from 'html-react-parser';
+import parse from "html-react-parser";
 
 const RoomCard = ({ room }) => {
   const [showModal, setShowModal] = useState(false);
@@ -26,139 +26,148 @@ const RoomCard = ({ room }) => {
   } = room;
 
   const displayPrice = price || converted_price || "N/A";
-  const {
-    breakfastInfo,
-    displayFields = {},
-  } = roomAdditionalInfo;
+  const { breakfastInfo, displayFields = {} } = roomAdditionalInfo;
   const {
     special_check_in_instructions: checkInInstructions,
     know_before_you_go: knowBeforeYouGo,
     fees_optional: feesOptional,
   } = displayFields;
 
-  const heroImage = images.find((img) => img.hero_image) || images[0];
-  const displayImageUrl = heroImage?.high_resolution_url || heroImage?.url;
+  const displayImageUrl = images?.[0]?.high_resolution_url || images?.[0]?.url;
 
   const toggleShowMore = () => setShowMore((prev) => !prev);
 
   return (
     <>
       <Card>
-        {displayImageUrl && (
-          <img
-            src={displayImageUrl}
-            alt={roomDescription}
-            className="w-full h-48 object-cover cursor-pointer rounded-t"
-            onClick={() => setShowModal(true)}
-          />
-        )}
+        <CardContent className="p-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            {/* Left: Image + Toggle Button + Details */}
+            <div className="w-full md:w-84 flex-shrink-0">
+              {displayImageUrl && (
+                <img
+                  src={displayImageUrl}
+                  alt={roomDescription}
+                  className="w-full h-48 object-cover rounded cursor-pointer"
+                  onClick={() => setShowModal(true)}
+                />
+              )}
 
-        <CardContent className="p-4 space-y-3">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold">{roomDescription || "Room"}</h3>
-            {free_cancellation ? (
-              <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
-                Free Cancellation
-              </span>
-            ) : (
-              <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">
-                Non-refundable
-              </span>
-            )}
-          </div>
+              {/* Show More Button */}
+              <button
+                onClick={toggleShowMore}
+                className="mt-3 text-primary text-sm font-medium hover:underline focus:outline-none"
+                aria-expanded={showMore}
+              >
+                {showMore ? "Hide details ▲" : "Show more details ▼"}
+              </button>
 
-          <div className="prose max-w-none text-sm text-gray-700">
-            {parse(long_description || "No description available")}
-          </div>
+              {/* Expanded Details */}
+              {showMore && (
+                <div className="mt-3 space-y-2 text-xs text-gray-700 prose max-w-none">
+                  {checkInInstructions && (
+                    <>
+                      <h5 className="font-semibold">Check-in Instructions</h5>
+                      <div>{parse(checkInInstructions)}</div>
+                    </>
+                  )}
+                  {knowBeforeYouGo && (
+                    <>
+                      <h5 className="font-semibold mt-3">Know Before You Go</h5>
+                      <div>{parse(knowBeforeYouGo)}</div>
+                    </>
+                  )}
+                  {feesOptional && (
+                    <>
+                      <h5 className="font-semibold mt-3">Optional Fees</h5>
+                      <div>{parse(feesOptional)}</div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
-          {amenities.length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-1">Amenities:</h4>
-              <div className="flex flex-wrap gap-2">
-                {amenities.map((a, i) => (
-                  <span
-                    key={i}
-                    className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs"
-                  >
-                    {a}
+            {/* Right: Room Details */}
+            <div className="flex-grow space-y-3">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold">
+                  {roomDescription || "Room"}
+                </h3>
+                {free_cancellation ? (
+                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
+                    Free Cancellation
                   </span>
-                ))}
+                ) : (
+                  <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">
+                    Non-refundable
+                  </span>
+                )}
               </div>
-            </div>
-          )}
 
-          <div className="flex justify-between items-center">
-            <div>
-              <span className="text-2xl font-bold text-primary">
-                {currency}
-                {typeof displayPrice === "number"
-                  ? displayPrice.toLocaleString()
-                  : displayPrice}
-              </span>
-              <p className="text-xs text-gray-500">per night</p>
-            </div>
-            {points && (
-              <div className="text-right text-sm text-gray-600">
-                or {points.toLocaleString()} points
+              <div className="prose max-w-none text-sm text-gray-700">
+                {parse(long_description || "No description available")}
               </div>
-            )}
+
+              {amenities.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-1">Amenities:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {amenities.map((a, i) => (
+                      <span
+                        key={i}
+                        className="bg-gray-200 text-gray-800 px-2 py-1 rounded text-xs"
+                      >
+                        {a}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-2xl font-bold text-primary">
+                    {currency}
+                    {typeof displayPrice === "number"
+                      ? displayPrice.toLocaleString()
+                      : displayPrice}
+                  </span>
+                  <p className="text-xs text-gray-500">per night</p>
+                </div>
+                {points && (
+                  <div className="text-right text-sm text-gray-600">
+                    or {points.toLocaleString()} points
+                  </div>
+                )}
+              </div>
+
+              {surcharges.length > 0 && (
+                <div className="text-xs text-gray-500">
+                  <strong>Taxes & fees included:</strong>{" "}
+                  {surcharges
+                    .map(
+                      (s) =>
+                        `${currency}${s.amount.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`
+                    )
+                    .join(", ")}
+                </div>
+              )}
+
+              {breakfastInfo && (
+                <div className="text-xs text-gray-600 italic mt-1">
+                  Breakfast Info: {breakfastInfo.replace(/_/g, " ")}
+                </div>
+              )}
+            </div>
           </div>
-
-          {surcharges.length > 0 && (
-            <div className="text-xs text-gray-500">
-              <strong>Taxes & fees included:</strong>{" "}
-              {surcharges
-                .map(
-                  (s) =>
-                    `${currency}${s.amount.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}`
-                )
-                .join(", ")}
-            </div>
-          )}
-
-          {breakfastInfo && (
-            <div className="text-xs text-gray-600 italic mt-1">
-              Breakfast Info: {breakfastInfo.replace(/_/g, " ")}
-            </div>
-          )}
-
-          <button
-            onClick={toggleShowMore}
-            className="mt-3 text-primary text-sm font-medium hover:underline focus:outline-none"
-            aria-expanded={showMore}
-          >
-            {showMore ? "Hide details ▲" : "Show more details ▼"}
-          </button>
-
-          {showMore && (
-            <div className="mt-3 space-y-2 text-xs text-gray-700 prose max-w-none">
-              {checkInInstructions && (
-                <>
-                  <h5 className="font-semibold">Check-in Instructions</h5>
-                  <div>{parse(checkInInstructions)}</div>
-                </>
-              )}
-              {knowBeforeYouGo && (
-                <>
-                  <h5 className="font-semibold mt-3">Know Before You Go</h5>
-                  <div>{parse(knowBeforeYouGo)}</div>
-                </>
-              )}
-              {feesOptional && (
-                <>
-                  <h5 className="font-semibold mt-3">Optional Fees</h5>
-                  <div>{parse(feesOptional)}</div>
-                </>
-              )}
-            </div>
-          )}
         </CardContent>
       </Card>
 
-      {showModal && (
+      {/* Modal Fullscreen Viewer */}
+      {showModal && displayImageUrl && (
         <div
           onClick={() => setShowModal(false)}
           className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 cursor-pointer p-4"
@@ -167,7 +176,7 @@ const RoomCard = ({ room }) => {
             src={displayImageUrl}
             alt={roomDescription}
             className="max-h-[90vh] max-w-[90vw] object-contain rounded shadow-lg"
-            onClick={(e) => e.stopPropagation()} // prevent closing when clicking the image
+            onClick={(e) => e.stopPropagation()}
           />
           <button
             onClick={() => setShowModal(false)}
@@ -253,7 +262,7 @@ const RoomDetails = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="pt-30 container mx-auto px-4 py-8 space-y-6">
+      <main className="pt-30 mx-auto px-4 py-8 space-y-6 max-w-6xl">
         {/* Hotel Summary */}
         <Card>
           <CardHeader>
@@ -333,4 +342,3 @@ const RoomDetails = () => {
 };
 
 export default RoomDetails;
-
