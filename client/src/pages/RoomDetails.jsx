@@ -1,15 +1,40 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Plane, Check, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Plane,
+  Check,
+  X,
+  Bed,
+  Expand,
+  Tv,
+  Utensils,
+  Moon,
+  Bath,
+  Briefcase,
+  AirVent,
+  CigaretteOff,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import parse from "html-react-parser";
+import parse, { domToReact } from "html-react-parser";
+import { useKeenSlider } from "keen-slider/react";
+import "keen-slider/keen-slider.min.css";
 
 const RoomCard = ({ room }) => {
   const [showModal, setShowModal] = useState(false);
+  const [currentImage, setCurrentImage] = useState(null);
   const [showMore, setShowMore] = useState(false);
+  const [sliderRef, instanceRef] = useKeenSlider({
+    loop: true,
+    slides: { perView: 1 },
+  });
 
   const {
     images = [],
@@ -33,79 +58,146 @@ const RoomCard = ({ room }) => {
     fees_optional: feesOptional,
   } = displayFields;
 
-  const displayImageUrl = images?.[0]?.high_resolution_url || images?.[0]?.url;
+  const iconList = [
+    Bed,
+    Expand,
+    Tv,
+    Utensils,
+    Moon,
+    Bath,
+    Briefcase,
+    AirVent,
+    CigaretteOff,
+  ];
+  let iconIndex = 0;
 
-  const toggleShowMore = () => setShowMore((prev) => !prev);
+  const transformLongDescription = (domNode) => {
+    if (domNode.name === "p" && domNode.children) {
+      const Icon = iconList[iconIndex++];
+      return (
+        <p className="flex gap-2 items-start text-sm text-gray-700">
+          {Icon && <Icon className="w-4 h-4 mt-1 text-primary flex-shrink-0" />}
+          <span>{domToReact(domNode.children)}</span>
+        </p>
+      );
+    }
+  };
 
   return (
     <>
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Left: Image + Toggle Button + Details */}
+            {/* Carousel with overlayed arrows */}
             <div className="w-full md:w-84 flex-shrink-0">
-              {displayImageUrl && (
-                <img
-                  src={displayImageUrl}
-                  alt={roomDescription}
-                  className="w-full h-48 object-cover rounded cursor-pointer"
-                  onClick={() => setShowModal(true)}
-                />
-              )}
+              {images.length > 0 ? (
+                <>
+                  <div className="relative group">
+                    <div
+                      ref={sliderRef}
+                      className="keen-slider rounded overflow-hidden h-48"
+                    >
+                      {images.map((img, i) => {
+                        const url = img.high_resolution_url || img.url;
+                        return (
+                          <div
+                            key={i}
+                            className="keen-slider__slide cursor-pointer"
+                            onClick={() => {
+                              setShowModal(true);
+                              setCurrentImage(url);
+                            }}
+                          >
+                            <img
+                              src={url}
+                              alt={`Room image ${i + 1}`}
+                              className="w-full h-48 object-cover"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
 
-              {/* Show More Button */}
-              <button
-                onClick={toggleShowMore}
-                className="mt-3 text-primary text-sm font-medium hover:underline focus:outline-none"
-                aria-expanded={showMore}
-              >
-                {showMore ? "Hide details ▲" : "Show more details ▼"}
-              </button>
+                    {/* Arrows now properly aligned on image */}
+                    <button
+                      onClick={() => instanceRef.current?.prev()}
+                      className="absolute top-1/2 left-2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1 shadow 
+             opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-100"
+                    >
+                      <ChevronLeft className="w-5 h-5 text-gray-800" />
+                    </button>
 
-              {/* Expanded Details */}
-              {showMore && (
-                <div className="mt-3 space-y-2 text-xs text-gray-700 prose max-w-none">
-                  {checkInInstructions && (
-                    <>
-                      <h5 className="font-semibold">Check-in Instructions</h5>
-                      <div>{parse(checkInInstructions)}</div>
-                    </>
+                    <button
+                      onClick={() => instanceRef.current?.next()}
+                      className="absolute top-1/2 right-2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1 shadow 
+             opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-100"
+                    >
+                      <ChevronRight className="w-5 h-5 text-gray-800" />
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={() => setShowMore((prev) => !prev)}
+                    className="mt-3 text-primary text-sm font-medium hover:underline"
+                  >
+                    {showMore ? "Hide details ▲" : "Show more details ▼"}
+                  </button>
+
+                  {showMore && (
+                    <div className="mt-3 space-y-2 text-xs text-gray-700 prose max-w-none">
+                      {checkInInstructions && (
+                        <>
+                          <h5 className="font-semibold">
+                            Check-in Instructions
+                          </h5>
+                          <div>{parse(checkInInstructions)}</div>
+                        </>
+                      )}
+                      {knowBeforeYouGo && (
+                        <>
+                          <h5 className="font-semibold mt-3">
+                            Know Before You Go
+                          </h5>
+                          <div>{parse(knowBeforeYouGo)}</div>
+                        </>
+                      )}
+                      {feesOptional && (
+                        <>
+                          <h5 className="font-semibold mt-3">Optional Fees</h5>
+                          <div>{parse(feesOptional)}</div>
+                        </>
+                      )}
+                    </div>
                   )}
-                  {knowBeforeYouGo && (
-                    <>
-                      <h5 className="font-semibold mt-3">Know Before You Go</h5>
-                      <div>{parse(knowBeforeYouGo)}</div>
-                    </>
-                  )}
-                  {feesOptional && (
-                    <>
-                      <h5 className="font-semibold mt-3">Optional Fees</h5>
-                      <div>{parse(feesOptional)}</div>
-                    </>
-                  )}
+                </>
+              ) : (
+                <div className="w-full h-48 flex items-center justify-center bg-gray-100 rounded">
+                  <ImageIcon className="w-6 h-6 text-gray-400" />
                 </div>
               )}
             </div>
 
-            {/* Right: Room Details */}
+            {/* Room Info */}
             <div className="flex-grow space-y-3">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl font-semibold">
                   {roomDescription || "Room"}
                 </h3>
-                {free_cancellation ? (
-                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
-                    Free Cancellation
-                  </span>
-                ) : (
-                  <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">
-                    Non-refundable
-                  </span>
-                )}
+                <span
+                  className={`px-2 py-1 rounded text-xs font-medium ${
+                    free_cancellation
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {free_cancellation ? "Free Cancellation" : "Non-refundable"}
+                </span>
               </div>
 
-              <div className="prose max-w-none text-sm text-gray-700">
-                {parse(long_description || "No description available")}
+              <div className="space-y-2">
+                {parse(long_description || "No description available", {
+                  replace: transformLongDescription,
+                })}
               </div>
 
               {amenities.length > 0 && (
@@ -166,15 +258,15 @@ const RoomCard = ({ room }) => {
         </CardContent>
       </Card>
 
-      {/* Modal Fullscreen Viewer */}
-      {showModal && displayImageUrl && (
+      {/* Modal Viewer */}
+      {showModal && currentImage && (
         <div
           onClick={() => setShowModal(false)}
           className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 cursor-pointer p-4"
         >
           <img
-            src={displayImageUrl}
-            alt={roomDescription}
+            src={currentImage}
+            alt="Room image"
             className="max-h-[90vh] max-w-[90vw] object-contain rounded shadow-lg"
             onClick={(e) => e.stopPropagation()}
           />
