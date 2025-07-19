@@ -35,3 +35,22 @@ app.get("/api/hotels/:id/prices", async (req, res) => {
 app.listen(8080, () => {
   console.log("Server started on port 8080");
 });
+
+
+// ➊ Forward static hotel list
+app.get("/api/hotels", async (req, res) => {
+  const { destination_id } = req.query;
+  const url = `https://hotelapi.loyalty.dev/api/hotels?destination_id=${destination_id}`;
+  const { data } = await axios.get(url);
+  res.json(data);
+});
+
+// ➋ Forward cheapest-price list
+app.get("/api/hotels/prices", async (req, res) => {
+  // pass everything through except partner_id (hard-code)
+  const url =
+    "https://hotelapi.loyalty.dev/api/hotels/prices?" +
+    new URLSearchParams({ ...req.query, partner_id: 1 }).toString();
+  const { data } = await axios.get(url);
+  res.json(data);
+});
