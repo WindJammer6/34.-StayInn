@@ -6,19 +6,33 @@ import starFilled from "../assets/starIconFilled.svg";
 /* fallback image */
 const PLACEHOLDER =
   "https://dummyimage.com/300x200/cccccc/000000&text=No+Image";
-
+  
 const getImageUrl = (h) => {
-  const img = h.image_details;
-  if (!img || img.count === 0) return PLACEHOLDER;
+  // 1. Kaligo-style top-level image_details
+  if (h.image_details?.count) {
+    const idx =
+      h.image_details.default_image_index ??
+      (h.image_details.count > 1 ? 1 : 0);
+    return `${h.image_details.prefix}${idx}${h.image_details.suffix}`;
+  }
 
-  const idx =
-    img.default_image_index !== undefined
-      ? img.default_image_index
-      : img.count > 1
-      ? 1
-      : 0;
+  // 2. Expedia-style top-level images[]
+  if (Array.isArray(h.images) && h.images.length) {
+    return h.images[0].url;
+  }
 
-  return `${img.prefix}${idx}${img.suffix}`;
+  // 3. Rate payload: rooms[0].images[]
+  if (
+    Array.isArray(h.rooms) &&
+    h.rooms.length &&
+    Array.isArray(h.rooms[0].images) &&
+    h.rooms[0].images.length
+  ) {
+    return h.rooms[0].images[0].url;
+  }
+
+  // 4. Fallback
+  return PLACEHOLDER;
 };
 
 const LocationPin = (props) => (
@@ -53,14 +67,19 @@ export default function HotelCard({ hotel: h, checkin, checkout }) {
     <li>
       <Link
         to={`/detail?hotel_id=${h.id}`}
-        className="flex flex-col md:flex-row items-stretch bg-gray-100 rounded-lg shadow-sm hover:bg-gray-200 hover:shadow-md transition overflow-hidden"
+        className="flex flex-col md:flex-row bg-gray-100 rounded-lg shadow-sm
+                   hover:bg-gray-200 hover:shadow-md transition overflow-hidden"
       >
-        {/* Image column */}
-        <div className="w-full md:w-56 shrink-0 flex">
+        {/*  Image */}
+        <div className="w-full md:w-56 h-40 md:h-44 flex-shrink-0">
           <img
             src={getImageUrl(h)}
             alt={h.name}
-            className="w-full h-full object-cover md:rounded-l-lg rounded-t-lg md:rounded-t-none"
+            className="w-full h-full object-cover"      /* crop & fill */
+            onError={(e) => {
+              e.currentTarget.onerror = null;           // prevent loops
+              e.currentTarget.src = PLACEHOLDER;        // fallback img
+            }}
           />
         </div>
 
