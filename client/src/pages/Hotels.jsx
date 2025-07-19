@@ -197,7 +197,6 @@ export default function Hotels() {
           </div>
 
           {/* Hotel list with loading states */}
-          const nights = Math.max(1, (new Date(OUT) - new Date(IN)) / (1000 * 60 * 60 * 24));
           <HotelList hotels={visibleHotels} checkin={IN} checkout={OUT} />
           
           {/* Loading indicator when more hotels are available */}
