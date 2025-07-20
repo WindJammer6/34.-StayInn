@@ -17,7 +17,7 @@ Install new dependencies
 npm i p-limit     
 ```
 
-1. Go to client folder
+1. Open a terminal, then go to client folder
 ```bash
 cd client
 ```
@@ -27,7 +27,7 @@ cd client
 npm run dev
 ```
 
-3. Go to server folder
+3. Open another terminal, then go to server folder
 ```bash
 cd server
 ```
