@@ -135,10 +135,6 @@ const FilterRow = ({ label, checked, onToggle }) => (
   </label>
 );
 
-
-/* ───────────────────────────────────────────────────────── */
-/* Sidebar Filters (using arrays)                            */
-/* ───────────────────────────────────────────────────────── */
 const Filters = ({ draft, onChangeDraft, onApply }) => {
   // small helper
   const patch = (obj) => onChangeDraft({ ...draft, ...obj });
