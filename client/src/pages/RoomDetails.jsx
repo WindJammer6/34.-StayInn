@@ -226,11 +226,15 @@ const RoomCard = ({ room }) => {
                   </span>
                   <p className="text-xs text-gray-500">per night</p>
                 </div>
-                {points && (
-                  <div className="text-right text-sm text-gray-600">
-                    or {points.toLocaleString()} points
-                  </div>
-                )}
+                <Button
+                  onClick={() => {
+                    alert(`Reserve room at price ${currency}${displayPrice}`);
+                  }}
+                  variant="default"
+                  size="lg"
+                >
+                  Reserve
+                </Button>
               </div>
 
               {surcharges.length > 0 && (
