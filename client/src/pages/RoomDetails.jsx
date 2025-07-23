@@ -228,6 +228,7 @@ const RoomCard = ({ room }) => {
                 </div>
                 <Button
                   onClick={() => {
+                    // You can add your reservation logic here
                     alert(`Reserve room at price ${currency}${displayPrice}`);
                   }}
                   variant="default"
