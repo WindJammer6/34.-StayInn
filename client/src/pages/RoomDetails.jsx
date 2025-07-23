@@ -6,15 +6,6 @@ import {
   Plane,
   Check,
   X,
-  Bed,
-  Expand,
-  Tv,
-  Utensils,
-  Moon,
-  Bath,
-  Briefcase,
-  AirVent,
-  CigaretteOff,
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
@@ -23,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import parse, { domToReact } from "html-react-parser";
+import parse from "html-react-parser";
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
 
@@ -45,7 +36,6 @@ const RoomCard = ({ room }) => {
     converted_price,
     currency = "$",
     surcharges = [],
-    points,
     roomAdditionalInfo = {},
     free_cancellation,
   } = room;
@@ -57,31 +47,6 @@ const RoomCard = ({ room }) => {
     know_before_you_go: knowBeforeYouGo,
     fees_optional: feesOptional,
   } = displayFields;
-
-  const iconList = [
-    Bed,
-    Expand,
-    Tv,
-    Utensils,
-    Moon,
-    Bath,
-    Briefcase,
-    AirVent,
-    CigaretteOff,
-  ];
-  let iconIndex = 0;
-
-  const transformLongDescription = (domNode) => {
-    if (domNode.name === "p" && domNode.children) {
-      const Icon = iconList[iconIndex++];
-      return (
-        <p className="flex gap-2 items-start text-sm text-gray-700">
-          {Icon && <Icon className="w-4 h-4 mt-1 text-primary flex-shrink-0" />}
-          <span>{domToReact(domNode.children)}</span>
-        </p>
-      );
-    }
-  };
 
   return (
     <>
@@ -118,19 +83,16 @@ const RoomCard = ({ room }) => {
                       })}
                     </div>
 
-                    {/* Arrows now properly aligned on image */}
                     <button
                       onClick={() => instanceRef.current?.prev()}
-                      className="absolute top-1/2 left-2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1 shadow 
-             opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-100"
+                      className="absolute top-1/2 left-2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-100"
                     >
                       <ChevronLeft className="w-5 h-5 text-gray-800" />
                     </button>
 
                     <button
                       onClick={() => instanceRef.current?.next()}
-                      className="absolute top-1/2 right-2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1 shadow 
-             opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-100"
+                      className="absolute top-1/2 right-2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-100"
                     >
                       <ChevronRight className="w-5 h-5 text-gray-800" />
                     </button>
@@ -194,10 +156,9 @@ const RoomCard = ({ room }) => {
                 </span>
               </div>
 
-              <div className="space-y-2">
-                {parse(long_description || "No description available", {
-                  replace: transformLongDescription,
-                })}
+              {/* Long description without icons */}
+              <div className="space-y-2 text-sm text-gray-700">
+                {parse(long_description || "No description available")}
               </div>
 
               {amenities.length > 0 && (
@@ -226,14 +187,7 @@ const RoomCard = ({ room }) => {
                   </span>
                   <p className="text-xs text-gray-500">per night</p>
                 </div>
-                <Button
-                  onClick={() => {
-                    // You can add your reservation logic here
-                    alert(`Reserve room at price ${currency}${displayPrice}`);
-                  }}
-                  variant="default"
-                  size="lg"
-                >
+                <Button onClick={() => alert("test")} size="lg">
                   Reserve
                 </Button>
               </div>
