@@ -292,6 +292,23 @@ const RoomCard = ({ room }) => {
   );
 };
 
+const GoogleMapEmbed = ({ lat, lng }) => {
+  const url = `https://www.google.com/maps?q=${lat},${lng}&hl=en&z=15&output=embed`;
+  return (
+    <div className="w-full rounded-lg overflow-hidden shadow">
+      <iframe
+        title="Hotel Location"
+        width="100%"
+        height="300"
+        style={{ border: 0 }}
+        loading="lazy"
+        allowFullScreen
+        src={url}
+      />
+    </div>
+  );
+};
+
 // -----------------------------
 // RoomDetails Page Component
 // -----------------------------
@@ -381,6 +398,8 @@ const RoomDetails = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="pt-30 mx-auto px-4 py-8 space-y-6 max-w-6xl">
+        <GoogleMapEmbed lat={1.318685} lng={103.847882} />
+
         {/* Booking Summary */}
         <Card>
           <CardHeader>
