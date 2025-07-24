@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import starFilled from "../assets/starIconFilled.svg";
 
 /* fallback image */
@@ -44,7 +44,20 @@ const LocationPin = (props) => (
   </svg>
 );
 
-export default function HotelCard({ hotel: h, checkin, checkout }) {
+export default function HotelCard({ 
+  hotel: h, 
+  checkin, 
+  checkout,
+  dest,
+  inDate,
+  outDate,
+  guests,
+  currency,
+  countryCode,
+  lang,
+  destLabel
+}) {
+  const navigate = useNavigate();
   const stars = Math.round(h.rating || 0);
   const guestScore = h.trustyou?.score?.overall ?? null;
   const reviewLabel = h.trustyou?.score?.overall
@@ -87,6 +100,34 @@ export default function HotelCard({ hotel: h, checkin, checkout }) {
     }
     return "N/A";
   };
+
+  const handleSelect = () => {
+    navigate('/detail', {
+      state: {
+        hotelId: h.id,
+        destinationId: h.destination_id || "WD0M",
+        checkin,
+        checkout,
+        lang: lang || "en_US",
+        currency: currency || "SGD",
+        countryCode: countryCode || "SG",
+        guests: guests || "2",
+        hotelData: h,
+        // Use the passed props
+        defaultValues: {
+          DEST: dest,
+          IN: inDate,
+          OUT: outDate,
+          GUESTS: guests,
+          CURR: currency,
+          CC: countryCode,
+          LANG: lang,
+          DEST_LABEL: destLabel
+        }
+      }
+    });
+  };
+
 
   return (
     <li className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition">
@@ -153,12 +194,12 @@ export default function HotelCard({ hotel: h, checkin, checkout }) {
         </div>
 
         {/* select button */}
-        <Link
-          to={`/detail?hotel_id=${h.id}`}
+        <button
+          onClick={handleSelect}
           className="w-full text-center py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700"
         >
           Select
-        </Link>
+        </button>
       </div>
     </li>
   );

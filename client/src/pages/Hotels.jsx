@@ -495,7 +495,20 @@ export default function Hotels() {
           
           {sortedHotels.length > 0 ? (
             <>
-              <HotelList hotels={visibleHotels} checkin={IN} checkout={OUT} />
+              <HotelList 
+                hotels={visibleHotels} 
+                checkin={IN}
+                checkout={OUT}
+                // Add these new props
+                dest={DEST}
+                inDate={IN}
+                outDate={OUT}
+                guests={GUESTS}
+                currency={CURR}
+                countryCode={CC}
+                lang={LANG}
+                destLabel={DEST_LABEL}
+              />
 
               {visibleCount < sortedHotels.length && (
                 <div ref={sentinelRef} className="flex justify-center py-8">
