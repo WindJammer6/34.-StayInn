@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Fuse from 'fuse.js';
 import { assets } from '../assets/assets';
@@ -18,31 +18,54 @@ const Hero = () => {
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
   const [rooms, setRooms] = useState(1);
+  const worker = useRef(null);
+  const workerRequestId = useRef(0);
 
   // Load destinations from JSON into state
   useEffect(() => {
     setDestinations(destinationsData);
   }, []);
 
-  // Set up Fuse.js for fuzzy matching search
-  const fuse = new Fuse(destinations, {
-    keys: ['term'],
-    threshold: 0.3, // controls typo tolerance
-  });
+useEffect(() => {
+    // Set up Web Worker to handle fuzzy search autocomplete
+    worker.current = new Worker(new URL('../workers/autocompleteWorker.js', import.meta.url), {
+        type: 'module',
+    });
+    // Init the worker with data
+    worker.current.postMessage({
+        type: "init",
+        payload: destinations,
+    });
+
+    // Handle results
+    worker.current.onmessage = (e) => {
+        if (searchTerm !== '') {
+            setSuggestions([]);
+            setSelectedUID(''); // clear UID if input is cleared
+            return;
+        } else {
+            setSuggestions(e.data.results);
+        }
+    }
+    return () => worker.current.terminate();
+}, [destinations]);
 
   // Run fuzzy search on searchTerm input changes
   useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setSuggestions([]);
-      setSelectedUID(''); // clear UID if input is cleared
-      return;
-    }
-
+    // debounces input, prevents spamming worker with messages
+    const timeout = setTimeout(() => {
+        // let worker handle fuzzy search (prevents frontend lag)
+        worker.current.postMessage({
+            type: "search",
+            payload: searchTerm,
+        });
+    }, 100);
+    return () => clearTimeout(timeout);
     // use fuse to assign searchTerm to results and map destination from dest.json file to fuse result r
     // r stands for result - is a variable name used in the .map()
-    const results = fuse.search(searchTerm);
-    const items = results.map((r) => r.item);
-    setSuggestions(items.slice(0, 8));
+//     const results = fuse.search(searchTerm);
+//     const items = results.map((r) => r.item);
+//     setSuggestions(items.slice(0, 8));
   }, [searchTerm]);
 
   // When user clicks a suggestion
