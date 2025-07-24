@@ -3,18 +3,27 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   ArrowLeft,
-  Plane,
   Check,
   X,
   ChevronLeft,
   ChevronRight,
   Image as ImageIcon,
+  Users,
+  LayoutGrid,
+  Tv,
+  Utensils,
+  Bed,
+  Bath,
+  Wrench,
+  AirVent,
+  Info,
+  CigaretteOff,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import parse from "html-react-parser";
+import parse, { domToReact } from "html-react-parser";
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
 
@@ -40,7 +49,7 @@ const RoomCard = ({ room }) => {
     free_cancellation,
   } = room;
 
-  const displayPrice = price || converted_price || "N/A";
+  const displayPrice = price ?? converted_price ?? "N/A";
   const { breakfastInfo, displayFields = {} } = roomAdditionalInfo;
   const {
     special_check_in_instructions: checkInInstructions,
@@ -48,12 +57,62 @@ const RoomCard = ({ room }) => {
     fees_optional: feesOptional,
   } = displayFields;
 
+  const boldIconMap = {
+    entertainment: Tv,
+    "food & drink": Utensils,
+    sleep: Bed,
+    bathroom: Bath,
+    practical: Wrench,
+    comfort: AirVent,
+    "need to know": Info,
+    "club/executive level": Users,
+    layout: LayoutGrid,
+  };
+
+  const replaceNode = (domNode) => {
+    if (
+      (domNode.name === "strong" || domNode.name === "b") &&
+      domNode.children
+    ) {
+      const raw = domNode.children
+        .map((c) => c.data || "")
+        .join("")
+        .toLowerCase()
+        .trim();
+      let Icon = boldIconMap[raw];
+      if (!Icon) {
+        const entry = Object.entries(boldIconMap).find(([kw]) =>
+          raw.includes(kw)
+        );
+        Icon = entry?.[1] ?? null;
+      }
+      return (
+        <span className="flex items-center gap-1">
+          {Icon && <Icon className="w-4 h-4 text-primary flex-shrink-0" />}
+          <strong>{domToReact(domNode.children)}</strong>
+        </span>
+      );
+    }
+    if (
+      domNode.name === "p" &&
+      domNode.children.length === 1 &&
+      domNode.children[0].data?.trim().toLowerCase() === "non-smoking"
+    ) {
+      return (
+        <p className="flex items-center gap-1 text-sm text-gray-700">
+          <CigaretteOff className="w-4 h-4 text-primary flex-shrink-0" />
+          {domNode.children[0].data}
+        </p>
+      );
+    }
+  };
+
   return (
     <>
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Carousel with overlayed arrows */}
+            {/* Carousel */}
             <div className="w-full md:w-84 flex-shrink-0">
               {images.length > 0 ? (
                 <>
@@ -82,14 +141,12 @@ const RoomCard = ({ room }) => {
                         );
                       })}
                     </div>
-
                     <button
                       onClick={() => instanceRef.current?.prev()}
                       className="absolute top-1/2 left-2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-100"
                     >
                       <ChevronLeft className="w-5 h-5 text-gray-800" />
                     </button>
-
                     <button
                       onClick={() => instanceRef.current?.next()}
                       className="absolute top-1/2 right-2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full p-1 shadow opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-opacity-100"
@@ -97,14 +154,12 @@ const RoomCard = ({ room }) => {
                       <ChevronRight className="w-5 h-5 text-gray-800" />
                     </button>
                   </div>
-
                   <button
-                    onClick={() => setShowMore((prev) => !prev)}
+                    onClick={() => setShowMore((p) => !p)}
                     className="mt-3 text-primary text-sm font-medium hover:underline"
                   >
                     {showMore ? "Hide details ▲" : "Show more details ▼"}
                   </button>
-
                   {showMore && (
                     <div className="mt-3 space-y-2 text-xs text-gray-700 prose max-w-none">
                       {checkInInstructions && (
@@ -138,7 +193,6 @@ const RoomCard = ({ room }) => {
                 </div>
               )}
             </div>
-
             {/* Room Info */}
             <div className="flex-grow space-y-3">
               <div className="flex justify-between items-center">
@@ -155,12 +209,10 @@ const RoomCard = ({ room }) => {
                   {free_cancellation ? "Free Cancellation" : "Non-refundable"}
                 </span>
               </div>
-
-              {/* Long description without icons */}
+              {/* Long description with replacements */}
               <div className="space-y-2 text-sm text-gray-700">
-                {parse(long_description || "No description available")}
+                {parse(long_description || "", { replace: replaceNode })}
               </div>
-
               {amenities.length > 0 && (
                 <div>
                   <h4 className="font-semibold mb-1">Amenities:</h4>
@@ -176,7 +228,6 @@ const RoomCard = ({ room }) => {
                   </div>
                 </div>
               )}
-
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-2xl font-bold text-primary">
@@ -191,7 +242,6 @@ const RoomCard = ({ room }) => {
                   Reserve
                 </Button>
               </div>
-
               {surcharges.length > 0 && (
                 <div className="text-xs text-gray-500">
                   <strong>Taxes & fees included:</strong>{" "}
@@ -206,7 +256,6 @@ const RoomCard = ({ room }) => {
                     .join(", ")}
                 </div>
               )}
-
               {breakfastInfo && (
                 <div className="text-xs text-gray-600 italic mt-1">
                   Breakfast Info: {breakfastInfo.replace(/_/g, " ")}
@@ -217,7 +266,7 @@ const RoomCard = ({ room }) => {
         </CardContent>
       </Card>
 
-      {/* Modal Viewer */}
+      {/* Modal */}
       {showModal && currentImage && (
         <div
           onClick={() => setShowModal(false)}
@@ -249,12 +298,12 @@ const RoomDetails = () => {
   const searchParams = new URLSearchParams(window.location.search);
   const hotelId = searchParams.get("hotel_id") || "diH7";
 
-  const fetchRoomDetails = async (hotelId) => {
+  const fetchRoomDetails = async (id) => {
     setLoading(true);
     setError(null);
     try {
       const response = await axios.get(
-        `http://localhost:8080/api/hotels/${hotelId}/price`,
+        `http://localhost:8080/api/hotels/${id}/price`,
         {
           params: {
             destination_id: searchParams.get("destination_id") || "WD0M",
@@ -286,18 +335,17 @@ const RoomDetails = () => {
   const totalGuests = guestCounts.reduce((a, b) => a + b, 0);
   const roomCount = guestCounts.length;
 
-  if (loading) {
+  if (loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Loading hotel details...</p>
         </div>
       </div>
     );
-  }
 
-  if (error || !hotelData) {
+  if (error || !hotelData)
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
         <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
@@ -309,41 +357,31 @@ const RoomDetails = () => {
         </Button>
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-background">
       <main className="pt-30 mx-auto px-4 py-8 space-y-6 max-w-6xl">
-        {/* Hotel Summary */}
+        {/* Booking Summary */}
         <Card>
           <CardHeader>
             <CardTitle>Booking Summary</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Check-in</span>
-              <span>{searchParams.get("checkin") || "-"}</span>
-            </div>
-            <Separator />
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Check-out</span>
-              <span>{searchParams.get("checkout") || "-"}</span>
-            </div>
-            <Separator />
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Guests</span>
-              <span>{totalGuests}</span>
-            </div>
-            <Separator />
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Rooms</span>
-              <span>{roomCount}</span>
-            </div>
-            <Separator />
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Currency</span>
-              <span>{searchParams.get("currency") || "-"}</span>
-            </div>
+            {[
+              ["Check-in", searchParams.get("checkin")],
+              ["Check-out", searchParams.get("checkout")],
+              ["Guests", totalGuests],
+              ["Rooms", roomCount],
+              ["Currency", searchParams.get("currency")],
+            ].map(([label, val], i) => (
+              <div key={i}>
+                {i > 0 && <Separator />}
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span>{val || "-"}</span>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
@@ -374,15 +412,15 @@ const RoomDetails = () => {
             <CardTitle>Available Rooms</CardTitle>
           </CardHeader>
           <CardContent>
-            {hotelData.rooms && hotelData.rooms.length > 0 ? (
+            {hotelData.rooms?.length > 0 ? (
               <div className="space-y-4">
-                {hotelData.rooms.map((room, idx) => (
-                  <RoomCard key={room.key || idx} room={room} />
+                {hotelData.rooms.map((r, i) => (
+                  <RoomCard key={r.key || i} room={r} />
                 ))}
               </div>
             ) : (
               <p className="text-muted-foreground text-center py-8">
-                No rooms available for your selected dates.
+                No rooms available.
               </p>
             )}
           </CardContent>
