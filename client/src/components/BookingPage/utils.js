@@ -1,4 +1,4 @@
-// Utility Functions for Booking Components
+//Utility Functions for Booking Components
 
 export const formatCardNumber = (value) => {
   return value.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
@@ -15,25 +15,25 @@ export const validatePhone = (phone) => {
 export const validateForm = (form) => {
   const newErrors = {};
   
-  // Required fields
-  const requiredFields = ['firstName', 'lastName', 'phoneNumber', 'emailAddress', 'creditCardNumber', 'expirationMonth', 'expirationYear', 'cvv'];
+  //Required fields
+  const requiredFields = ['firstName', 'lastName', 'phoneNumber', 'emailAddress', 'nameOnCard', 'creditCardNumber', 'expirationMonth', 'expirationYear', 'cvv'];
   requiredFields.forEach(field => {
     if (!form[field]?.trim()) {
       newErrors[field] = 'This field is required';
     }
   });
   
-  // Email validation
+  //Email validation
   if (form.emailAddress && !validateEmail(form.emailAddress)) {
     newErrors.emailAddress = 'Please enter a valid email';
   }
   
-  // Phone validation
+  //Phone validation
   if (form.phoneNumber && !validatePhone(form.phoneNumber)) {
     newErrors.phoneNumber = 'Please enter a valid phone number';
   }
   
-  // Credit card validation
+  //Credit card validation
   if (form.creditCardNumber) {
     const cardNumber = form.creditCardNumber.replace(/\s/g, '');
     if (cardNumber.length < 13 || cardNumber.length > 19) {
@@ -41,10 +41,14 @@ export const validateForm = (form) => {
     }
   }
   
-  // CVV validation
-  if (form.cvv && (form.cvv.length < 3 || form.cvv.length > 4)) {
-    newErrors.cvv = 'Please enter a valid CVV';
+  //CVV validation: numeric only and length 3 or 4
+  if (form.cvv) {
+    if (!/^\d+$/.test(form.cvv)) {
+      newErrors.cvv = 'CVV must contain only numbers';
+    } else if (form.cvv.length < 3 || form.cvv.length > 4) {
+      newErrors.cvv = 'Please enter a valid CVV (3 or 4 digits)';
+    }
   }
-  
+ 
   return newErrors;
 };

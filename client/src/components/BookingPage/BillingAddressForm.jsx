@@ -3,7 +3,8 @@ import FormSection from './FormSection';
 import Input from './Input';
 import Select from './Select';
 
-// Constants
+//Hardcoded countries for the bookingpage
+//can try other method like api call(to be improved)
 const COUNTRIES = [
   { value: 'AF', label: 'Afghanistan' },
   { value: 'AU', label: 'Australia' },

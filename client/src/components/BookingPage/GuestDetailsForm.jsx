@@ -50,7 +50,7 @@ const GuestDetailsForm = ({ form, errors, onChange }) => {
           required 
         />
       </div>
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <Input 
           label="Title/Salutation" 
           name="salutation" 
@@ -58,7 +58,26 @@ const GuestDetailsForm = ({ form, errors, onChange }) => {
           onChange={onChange}
           placeholder="Mr. / Ms. / Dr."
         />
+      </div> */}
+
+      <div className="mb-6">
+        <label htmlFor="salutation" className="block font-medium text-gray-700 mb-1">Title/Salutation</label>
+        <select
+          id="salutation"
+          name="salutation"
+          value={form.salutation}
+          onChange={onChange}
+          className="border border-gray-300 rounded p-2 w-full"
+        >
+          <option value="">Select</option>
+          <option value="Mr">Mr</option>
+          <option value="Ms">Ms</option>
+          <option value="Mrs">Mrs</option>
+          <option value="Dr">Dr</option>
+          <option value="Prof">Prof</option>
+        </select>
       </div>
+
       <Input 
         label="Special Requests" 
         name="specialRequests" 

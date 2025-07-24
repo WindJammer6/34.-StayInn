@@ -46,6 +46,8 @@ const PaymentForm = ({ form, errors, onChange }) => {
           value={form.nameOnCard} 
           onChange={onChange}
           placeholder="Name as shown on card"
+          error={errors.creditCardNumber}
+          required
         />
         <Input 
           label="Card Number" 

@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { Wifi, Car, Shield, Lock } from 'lucide-react';
 
-// Import components
 import HotelCard from '../components/BookingPage/HotelCard';
 import BookingDetails from '../components/BookingPage/BookingDetails';
 import GuestDetailsForm from '../components/BookingPage/GuestDetailsForm';
 import PaymentForm from '../components/BookingPage/PaymentForm';
 import BillingAddressForm from '../components/BookingPage/BillingAddressForm';
 
-// Import utilities
 import { formatCardNumber, validateForm } from '../components/BookingPage/utils';
 
+//feature 3 should pass data neccessary(props) when using bookingpage
+//if there is no data, hardcoded data is used currently
+//there are 3 props: props.hotel, props.booking and props. pricing
+
 const BookingPage = (props = {}) => {
-  // Default props for hotel, booking, pricing
   const hotel = props.hotel || {
     name: "The Fullerton Hotel Singapore",
     stars: 5,
@@ -28,8 +29,8 @@ const BookingPage = (props = {}) => {
   };
 
   const booking = props.booking || {
-    checkIn: { date: "Tue, 09 Jul, 2024", time: "From 2:00 PM" },
-    checkOut: { date: "Wed, 10 Jul, 2024", time: "Until 12:00 PM" },
+    checkIn: { date: "Tue, 09 Aug, 2025", time: "From 2:00 PM" },
+    checkOut: { date: "Wed, 10 Aug, 2025", time: "Until 12:00 PM" },
     roomType: "Deluxe Room",
     nights: 1,
     adults: 2,
@@ -44,7 +45,7 @@ const BookingPage = (props = {}) => {
     total: "$517.50"
   };
 
-  // Form state
+  //This holds booking details of the user
   const [form, setForm] = useState({
     firstName: '', lastName: '', phoneNumber: '', emailAddress: '', salutation: '', specialRequests: '',
     nameOnCard: '', creditCardNumber: '', expirationMonth: '', expirationYear: '', cvv: '',
@@ -52,25 +53,31 @@ const BookingPage = (props = {}) => {
     country: 'SG', stateProvince: '', postalCode: ''
   });
 
+  //This holds validation errors for the form completion
   const [errors, setErrors] = useState({});
+
+  //This holds the loading state of the booking
   const [loading, setLoading] = useState(false);
 
-  // Form handlers
+  //Update the state of the form when the updates are make
   const updateForm = (e) => {
     const { name, value } = e.target;
     let processedValue = value;
 
+    //change the input into the creditcard number format
     if (name === 'creditCardNumber') {
       processedValue = formatCardNumber(value);
     }
 
     setForm(prev => ({ ...prev, [name]: processedValue }));
 
+    //When there is an update, the existing error will be cleared
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
   };
 
+  //If there is no error from validateForm, it will make an API call 
   const handleSubmit = async () => {
     const validationErrors = validateForm(form);
     setErrors(validationErrors);
@@ -79,8 +86,7 @@ const BookingPage = (props = {}) => {
 
     setLoading(true);
 
-    try {
-      // Simulate API call delay
+    /*try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       console.log('Booking submitted:', { form, hotel, booking, pricing });
       props.onSubmit?.(form);
@@ -90,7 +96,32 @@ const BookingPage = (props = {}) => {
       alert("Booking failed. Please try again.");
     } finally {
       setLoading(false);
+    }*/
+
+    //api call with endpoint: api/bookings
+    try {
+      const response = await fetch('http://localhost:3000/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ form, hotel, booking, pricing }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const data = await response.json();
+      console.log('Booking submitted:', data);
+      alert("Booking submitted successfully!");
+      props.onSubmit?.(form);
+
+      } catch (error) {
+      console.error('Booking failed:', error);
+      alert("Booking failed. Please try again.");
+      } finally {
+      setLoading(false);
     }
+
   };
 
   return (
