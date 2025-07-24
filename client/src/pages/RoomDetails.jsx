@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
   ArrowLeft,
@@ -27,6 +27,9 @@ import parse, { domToReact } from "html-react-parser";
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
 
+// -----------------------------
+// RoomCard Component
+// -----------------------------
 const RoomCard = ({ room }) => {
   const [showModal, setShowModal] = useState(false);
   const [currentImage, setCurrentImage] = useState(null);
@@ -209,7 +212,6 @@ const RoomCard = ({ room }) => {
                   {free_cancellation ? "Free Cancellation" : "Non-refundable"}
                 </span>
               </div>
-              {/* Long description with replacements */}
               <div className="space-y-2 text-sm text-gray-700">
                 {parse(long_description || "", { replace: replaceNode })}
               </div>
@@ -290,29 +292,44 @@ const RoomCard = ({ room }) => {
   );
 };
 
+// -----------------------------
+// RoomDetails Page Component
+// -----------------------------
 const RoomDetails = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const {
+    hotelId = "diH7",
+    destinationId = "WD0M",
+    checkin = "2025-10-10",
+    checkout = "2025-10-17",
+    lang = "en_US",
+    currency = "SGD",
+    countryCode = "SG",
+    guests = "2",
+    hotelData: passedHotelData = null,
+  } = location.state || {};
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [hotelData, setHotelData] = useState(null);
-  const searchParams = new URLSearchParams(window.location.search);
-  const hotelId = searchParams.get("hotel_id") || "diH7";
+  const [hotelData, setHotelData] = useState(passedHotelData);
 
-  const fetchRoomDetails = async (id) => {
+  const fetchRoomDetails = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await axios.get(
-        `http://localhost:8080/api/hotels/${id}/price`,
+        `http://localhost:8080/api/hotels/${hotelId}/price`,
         {
           params: {
-            destination_id: searchParams.get("destination_id") || "WD0M",
-            checkin: searchParams.get("checkin") || "2025-10-10",
-            checkout: searchParams.get("checkout") || "2025-10-17",
-            lang: searchParams.get("lang") || "en_US",
-            currency: searchParams.get("currency") || "SGD",
-            country_code: searchParams.get("country_code") || "SG",
-            guests: searchParams.get("guests") || "2",
+            destination_id: destinationId,
+            checkin,
+            checkout,
+            lang,
+            currency,
+            country_code: countryCode,
+            guests,
             partner_id: "1",
           },
         }
@@ -327,15 +344,16 @@ const RoomDetails = () => {
   };
 
   useEffect(() => {
-    fetchRoomDetails(hotelId);
-  }, [hotelId]);
+    if (!passedHotelData) {
+      fetchRoomDetails();
+    }
+  }, []);
 
-  const guestsString = searchParams.get("guests") || "1";
-  const guestCounts = guestsString.split("|").map(Number);
+  const guestCounts = guests.split("|").map(Number);
   const totalGuests = guestCounts.reduce((a, b) => a + b, 0);
   const roomCount = guestCounts.length;
 
-  if (loading)
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -344,8 +362,9 @@ const RoomDetails = () => {
         </div>
       </div>
     );
+  }
 
-  if (error || !hotelData)
+  if (error || !hotelData) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
         <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
@@ -357,6 +376,7 @@ const RoomDetails = () => {
         </Button>
       </div>
     );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -368,11 +388,11 @@ const RoomDetails = () => {
           </CardHeader>
           <CardContent className="space-y-3">
             {[
-              ["Check-in", searchParams.get("checkin")],
-              ["Check-out", searchParams.get("checkout")],
+              ["Check-in", checkin],
+              ["Check-out", checkout],
               ["Guests", totalGuests],
               ["Rooms", roomCount],
-              ["Currency", searchParams.get("currency")],
+              ["Currency", currency],
             ].map(([label, val], i) => (
               <div key={i}>
                 {i > 0 && <Separator />}
