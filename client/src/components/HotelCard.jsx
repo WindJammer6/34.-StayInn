@@ -1,4 +1,3 @@
-// src/components/HotelCard.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import starFilled from "../assets/starIconFilled.svg";
@@ -57,15 +56,40 @@ export default function HotelCard({ hotel: h, checkin, checkout }) {
     (new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24)
   );
 
-  const priceText = h.price
-    ? h.price.min === h.price.max
-      ? `S$ ${h.price.min.toFixed(0)} (${nights} night${nights > 1 ? "s" : ""})`
-      : `S$ ${h.price.min.toFixed(0)} – S$ ${h.price.max.toFixed(0)} (${nights} night${nights > 1 ? "s" : ""})`
-    : "Price not available";
+  const getPriceDisplay = () => {
+    const price = h.lowest_price ?? h.price ?? h.lowest_converted_price ?? h.converted_price;
+    const maxPrice = h.max_cash_payment ?? h.coverted_max_cash_payment;
+    
+    if (price && maxPrice) {
+      if (price === maxPrice) {
+        return (
+          <>
+            <span className="text-xs font-normal">From </span>
+            S${price.toFixed(0)}
+          </>
+        );
+      }
+      return (
+        <>
+          <span className="text-xs font-normal">From </span>
+          S$ {price.toFixed(0)} <br />
+          – S$ {maxPrice.toFixed(0)}
+        </>
+      );
+    }
+    if (price) {
+      return (
+        <>
+          <span className="text-xs font-normal">From </span>
+          S${price.toFixed(0)}
+        </>
+      );
+    }
+    return "N/A";
+  };
 
   return (
     <li className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition">
-
       {/* ── Fixed-size image (180 × 150) ───────────────────── */}
       <img
         src={getImageUrl(h)}
@@ -79,7 +103,6 @@ export default function HotelCard({ hotel: h, checkin, checkout }) {
 
       {/* ── Middle section ────────────────────────────────── */}
       <div className="flex-1 flex flex-col gap-1 px-4 py-3">
-
         {/* Hotel name + score badge */}
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold leading-tight">{h.name}</h2>
@@ -115,18 +138,10 @@ export default function HotelCard({ hotel: h, checkin, checkout }) {
             {h.description.split(".")[0]}.
           </p>
         )}
-
-        {/* Distance */}
-        {h.distance && (
-          <span className="text-[11px] text-gray-400 mt-auto">
-            {(h.distance / 1000).toFixed(1)} km away
-          </span>
-        )}
       </div>
 
       {/* ── Right column: nights • price • button ─────────── */}
       <div className="w-[165px] flex flex-col items-end px-4 py-3 text-right">
-
         {/* nights */}
         <div className="text-xs text-gray-600">
           1 room&nbsp;{nights}&nbsp;night{nights > 1 ? "s" : ""}
@@ -134,14 +149,7 @@ export default function HotelCard({ hotel: h, checkin, checkout }) {
 
         {/* price range */}
         <div className="mt-auto mb-1 text-lg font-bold text-yellow-500 text-right leading-snug">
-          {h.price?.min
-            ? h.price.min === h.price.max
-              ? `S$${h.price.min.toLocaleString()}`
-              : <>
-                  S$ {h.price.min.toLocaleString()} <br />
-                  – S$ {h.price.max.toLocaleString()}
-                </>
-            : "N/A"}
+          {getPriceDisplay()}
         </div>
 
         {/* select button */}
@@ -153,6 +161,5 @@ export default function HotelCard({ hotel: h, checkin, checkout }) {
         </Link>
       </div>
     </li>
-
   );
 }
