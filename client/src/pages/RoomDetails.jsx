@@ -319,7 +319,7 @@ const RoomDetails = () => {
   // Get state without defaults first
   const state = location.state || {};
   console.log("Location state:", state);
-  
+
   const {
     hotelId,
     destinationId,
@@ -330,7 +330,7 @@ const RoomDetails = () => {
     countryCode,
     guests,
     hotelData: passedHotelData,
-    defaultValues = {}
+    defaultValues = {},
   } = state;
 
   const effectiveParams = {
@@ -341,7 +341,7 @@ const RoomDetails = () => {
     lang: lang || defaultValues.lang || "en_US",
     currency: currency || defaultValues.currency || "SGD",
     countryCode: countryCode || defaultValues.countryCode || "SG",
-    guests: guests || defaultValues.guests || "2"
+    guests: guests || defaultValues.guests || "2",
   };
 
   console.log("Effective params:", effectiveParams);
@@ -374,15 +374,19 @@ const RoomDetails = () => {
       setHotelData(response.data);
     } catch (err) {
       console.error("Failed to load hotel details:", err);
-      setError(err.message || "Failed to load hotel details. Please try again.");
+      setError(
+        err.message || "Failed to load hotel details. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    console.log("Fetching room details...");
-    fetchRoomDetails();
+    if (!passedHotelData) {
+      console.log("Fetching room details...");
+      fetchRoomDetails();
+    }
   }, []); // Empty dependency array to run only once on mount
 
   const guestCounts = guests.split("|").map(Number);
@@ -417,7 +421,33 @@ const RoomDetails = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="pt-30 mx-auto px-4 py-8 space-y-6 max-w-6xl">
-        <GoogleMapEmbed lat={hotelData.latitude || 1.318685} lng={hotelData.longitude || 103.847882} />
+        <GoogleMapEmbed
+          lat={hotelData.latitude || 1.318685}
+          lng={hotelData.longitude || 103.847882}
+        />
+
+        {/* Hotel Title and Images */}
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold">{hotelData.name}</h1>
+          {hotelData.image_details?.count > 0 ? (
+            <div className="flex overflow-x-auto gap-4 py-2">
+              {Array.from({ length: hotelData.image_details.count }).map(
+                (_, idx) => (
+                  <img
+                    key={idx}
+                    src={`${hotelData.image_details.prefix}${idx}${hotelData.image_details.suffix}`}
+                    alt={`Hotel image ${idx + 1}`}
+                    className="w-48 h-32 object-cover rounded shadow"
+                  />
+                )
+              )}
+            </div>
+          ) : (
+            <div className="w-full h-32 bg-gray-200 flex items-center justify-center rounded">
+              <p className="text-gray-500 text-sm">No images available</p>
+            </div>
+          )}
+        </div>
 
         {/* Booking Summary */}
         <Card>

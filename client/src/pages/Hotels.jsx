@@ -104,24 +104,28 @@ const FilterRow = ({ label, checked, onToggle }) => (
 const HotelCard = ({ hotel, checkin, checkout }) => {
   const getImageUrl = () => {
     if (hotel.image_details?.prefix && hotel.image_details?.count > 0) {
-      return `${hotel.image_details.prefix}${hotel.default_image_index || 1}${hotel.image_details.suffix || '.jpg'}`;
+      return `${hotel.image_details.prefix}${hotel.default_image_index || 1}${
+        hotel.image_details.suffix || ".jpg"
+      }`;
     }
-    return 'https://via.placeholder.com/300x200?text=No+Image';
+    return "https://via.placeholder.com/300x200?text=No+Image";
   };
 
   // Format price display
   const formatPrice = (price) => {
-  if (price === undefined || price === null) {
-    // Try alternative price fields if lowest_price isn't available
-    return formatPrice(hotel.price || hotel.converted_price || hotel.lowest_converted_price);
-  }
-  return new Intl.NumberFormat('en-SG', {
-    style: 'currency',
-    currency: CURR,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(price);
-};
+    if (price === undefined || price === null) {
+      // Try alternative price fields if lowest_price isn't available
+      return formatPrice(
+        hotel.price || hotel.converted_price || hotel.lowest_converted_price
+      );
+    }
+    return new Intl.NumberFormat("en-SG", {
+      style: "currency",
+      currency: CURR,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price);
+  };
 
   return (
     <Card className="mb-6">
@@ -140,10 +144,10 @@ const HotelCard = ({ hotel, checkin, checkout }) => {
                 <h2 className="text-xl font-semibold">{hotel.name}</h2>
                 <div className="flex items-center mt-1">
                   <span className="text-yellow-500">
-                    {'★'.repeat(Math.round(hotel.rating || 0))}
+                    {"★".repeat(Math.round(hotel.rating || 0))}
                   </span>
                   <span className="text-sm text-gray-500 ml-1">
-                    ({hotel.rating?.toFixed(1) || 'N/A'})
+                    ({hotel.rating?.toFixed(1) || "N/A"})
                   </span>
                 </div>
                 <p className="text-sm text-gray-600 mt-1">{hotel.address}</p>
@@ -160,23 +164,23 @@ const HotelCard = ({ hotel, checkin, checkout }) => {
                 )}
               </div>
             </div>
-            
+
             {hotel.description && (
               <div className="mt-4 text-sm text-gray-700">
                 <h3 className="font-medium mb-1">Description:</h3>
                 <div className="prose prose-sm max-w-none">
                   {parse(hotel.description, {
                     replace: (domNode) => {
-                      if (domNode.type === 'tag' && domNode.name === 'br') {
+                      if (domNode.type === "tag" && domNode.name === "br") {
                         return <br />;
                       }
                       return domNode;
-                    }
+                    },
                   })}
                 </div>
               </div>
             )}
-            
+
             <div className="mt-4 flex justify-end">
               <Button>View Deal</Button>
             </div>
@@ -268,60 +272,62 @@ export default function Hotels() {
 
   /* Combined API calls to fetch hotels with details and prices */
   useEffect(() => {
-  const fetchHotels = async () => {
-    try {
-      setLoading(true);
-      
-      // First fetch hotel details
-      const detailsResponse = await fetch(
-        `http://localhost:8080/api/hotels?destination_id=${DEST}`
-      );
-      
-      if (!detailsResponse.ok) throw new Error("Failed to fetch hotel details");
-      
-      const detailsData = await detailsResponse.json();
-      
-      // Then fetch prices
-      const pricesResponse = await fetch(
-        `http://localhost:8080/api/hotels/prices?destination_id=${DEST}&checkin=${IN}&checkout=${OUT}&lang=${LANG}&currency=${CURR}&country_code=${CC}&guests=${GUESTS}`
-      );
-      
-      if (!pricesResponse.ok) throw new Error("Failed to fetch hotel prices");
-      
-      const pricesData = await pricesResponse.json();
-      
-      // Create a map of prices by hotel ID for quick lookup
-      const pricesMap = {};
-      pricesData.hotels?.forEach(priceInfo => {
-        pricesMap[priceInfo.id] = {
-          lowest_price: priceInfo.lowest_price || priceInfo.lowest_converted_price,
-          price: priceInfo.price || priceInfo.converted_price,
-          free_cancellation: priceInfo.free_cancellation,
-          rooms_available: priceInfo.rooms_available,
-          // Add other price-related fields you want to display
-        };
-      });
-      
-      // Combine the data
-      const combinedHotels = detailsData.map(hotel => {
-        const priceInfo = pricesMap[hotel.id] || {};
-        return {
-          ...hotel,
-          ...priceInfo,  // Spread all price info into the hotel object
-        };
-      });
-      
-      setHotels(combinedHotels);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load hotels.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchHotels = async () => {
+      try {
+        setLoading(true);
 
-  fetchHotels();
-}, []);
+        // First fetch hotel details
+        const detailsResponse = await fetch(
+          `http://localhost:8080/api/hotels?destination_id=${DEST}`
+        );
+
+        if (!detailsResponse.ok)
+          throw new Error("Failed to fetch hotel details");
+
+        const detailsData = await detailsResponse.json();
+
+        // Then fetch prices
+        const pricesResponse = await fetch(
+          `http://localhost:8080/api/hotels/prices?destination_id=${DEST}&checkin=${IN}&checkout=${OUT}&lang=${LANG}&currency=${CURR}&country_code=${CC}&guests=${GUESTS}`
+        );
+
+        if (!pricesResponse.ok) throw new Error("Failed to fetch hotel prices");
+
+        const pricesData = await pricesResponse.json();
+
+        // Create a map of prices by hotel ID for quick lookup
+        const pricesMap = {};
+        pricesData.hotels?.forEach((priceInfo) => {
+          pricesMap[priceInfo.id] = {
+            lowest_price:
+              priceInfo.lowest_price || priceInfo.lowest_converted_price,
+            price: priceInfo.price || priceInfo.converted_price,
+            free_cancellation: priceInfo.free_cancellation,
+            rooms_available: priceInfo.rooms_available,
+            // Add other price-related fields you want to display
+          };
+        });
+
+        // Combine the data
+        const combinedHotels = detailsData.map((hotel) => {
+          const priceInfo = pricesMap[hotel.id] || {};
+          return {
+            ...hotel,
+            ...priceInfo, // Spread all price info into the hotel object
+          };
+        });
+
+        setHotels(combinedHotels);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load hotels.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHotels();
+  }, []);
 
   const sortedHotels = useMemo(() => {
     let filtered = hotels.filter((h) => {
@@ -329,11 +335,13 @@ export default function Hotels() {
       if (filters.priceRanges.length) {
         const inRange = filters.priceRanges.some((label) => {
           const range = PRICE_RANGES.find((r) => r.label === label);
-          return range && h.lowest_price >= range.min && h.lowest_price < range.max;
+          return (
+            range && h.lowest_price >= range.min && h.lowest_price < range.max
+          );
         });
         if (!inRange) return false;
       }
-      
+
       // Star rating filter
       if (filters.starRatings.length) {
         const hotelStarRating = Math.round(h.rating || 0);
@@ -341,7 +349,7 @@ export default function Hotels() {
           return false;
         }
       }
-      
+
       // Guest rating filter
       if (filters.guestRatings.length) {
         // Convert guest rating to 0-10 scale (assuming API returns 0-1)
@@ -352,15 +360,15 @@ export default function Hotels() {
         );
         if (!meetsThreshold) return false;
       }
-      
+
       return true;
     });
 
     // Sorting logic
     switch (sortKey) {
       case "lowest-price":
-        filtered.sort((a, b) => 
-          (a.lowest_price ?? Infinity) - (b.lowest_price ?? Infinity)
+        filtered.sort(
+          (a, b) => (a.lowest_price ?? Infinity) - (b.lowest_price ?? Infinity)
         );
         break;
       case "highest-price":
@@ -373,14 +381,16 @@ export default function Hotels() {
         filtered.sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
         break;
       case "top-reviewed":
-        filtered.sort((a, b) => 
-          (b.trustyou?.score?.overall ?? 0) - (a.trustyou?.score?.overall ?? 0)
+        filtered.sort(
+          (a, b) =>
+            (b.trustyou?.score?.overall ?? 0) -
+            (a.trustyou?.score?.overall ?? 0)
         );
         break;
       default:
         // Default sorting (lowest price)
-        filtered.sort((a, b) => 
-          (a.lowest_price ?? Infinity) - (b.lowest_price ?? Infinity)
+        filtered.sort(
+          (a, b) => (a.lowest_price ?? Infinity) - (b.lowest_price ?? Infinity)
         );
     }
 
@@ -389,7 +399,7 @@ export default function Hotels() {
 
   useEffect(() => {
     if (!sentinelRef.current || loading) return;
-    
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && visibleCount < sortedHotels.length) {
@@ -400,7 +410,7 @@ export default function Hotels() {
       },
       { rootMargin: "200px" }
     );
-    
+
     observer.observe(sentinelRef.current);
     return () => observer.disconnect();
   }, [sortedHotels.length, visibleCount, loading]);
@@ -419,9 +429,7 @@ export default function Hotels() {
 
     if (filters.starRatings.length) {
       parts.push(
-        `Stars: ${filters.starRatings
-          .map((s) => `${s}★`)
-          .join(", ")}`
+        `Stars: ${filters.starRatings.map((s) => `${s}★`).join(", ")}`
       );
     }
 
@@ -452,7 +460,7 @@ export default function Hotels() {
   return (
     <div className="container mx-auto px-4 pt-28 pb-12">
       <SearchHeader />
-      
+
       <div className="mt-6 flex flex-col lg:flex-row gap-6">
         <aside className="lg:w-72 w-full">
           <Filters
@@ -461,7 +469,7 @@ export default function Hotels() {
             onApply={() => setFilters(pending)}
           />
         </aside>
-        
+
         <section className="flex-1">
           <div className="flex flex-col md:flex-row justify-between gap-4 mb-4">
             <div>
@@ -470,7 +478,7 @@ export default function Hotels() {
               </h1>
               {renderFiltersUsed()}
             </div>
-            
+
             <div className="flex items-center gap-2">
               <label htmlFor="sort" className="text-sm font-medium">
                 Sort:
@@ -492,11 +500,11 @@ export default function Hotels() {
               </select>
             </div>
           </div>
-          
+
           {sortedHotels.length > 0 ? (
             <>
-              <HotelList 
-                hotels={visibleHotels} 
+              <HotelList
+                hotels={visibleHotels}
                 checkin={IN}
                 checkout={OUT}
                 // Add these new props

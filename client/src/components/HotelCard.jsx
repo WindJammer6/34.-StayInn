@@ -5,7 +5,7 @@ import starFilled from "../assets/starIconFilled.svg";
 /* fallback image */
 const PLACEHOLDER =
   "https://dummyimage.com/300x200/cccccc/000000&text=No+Image";
-  
+
 const getImageUrl = (h) => {
   // 1. Kaligo-style top-level image_details
   if (h.image_details?.count) {
@@ -44,9 +44,9 @@ const LocationPin = (props) => (
   </svg>
 );
 
-export default function HotelCard({ 
-  hotel: h, 
-  checkin, 
+export default function HotelCard({
+  hotel: h,
+  checkin,
   checkout,
   dest,
   inDate,
@@ -55,7 +55,7 @@ export default function HotelCard({
   currency,
   countryCode,
   lang,
-  destLabel
+  destLabel,
 }) {
   const navigate = useNavigate();
   const stars = Math.round(h.rating || 0);
@@ -70,9 +70,13 @@ export default function HotelCard({
   );
 
   const getPriceDisplay = () => {
-    const price = h.lowest_price ?? h.price ?? h.lowest_converted_price ?? h.converted_price;
+    const price =
+      h.lowest_price ??
+      h.price ??
+      h.lowest_converted_price ??
+      h.converted_price;
     const maxPrice = h.max_cash_payment ?? h.coverted_max_cash_payment;
-    
+
     if (price && maxPrice) {
       if (price === maxPrice) {
         return (
@@ -85,8 +89,7 @@ export default function HotelCard({
       return (
         <>
           <span className="text-xs font-normal">From </span>
-          S$ {price.toFixed(0)} <br />
-          – S$ {maxPrice.toFixed(0)}
+          S$ {price.toFixed(0)} <br />– S$ {maxPrice.toFixed(0)}
         </>
       );
     }
@@ -102,7 +105,7 @@ export default function HotelCard({
   };
 
   const handleSelect = () => {
-    navigate('/detail', {
+    navigate("/detail", {
       state: {
         hotelId: h.id,
         destinationId: h.destination_id || "WD0M",
@@ -112,7 +115,15 @@ export default function HotelCard({
         currency: currency || "SGD",
         countryCode: countryCode || "SG",
         guests: guests || "2",
-        hotelData: h,
+        hotelData: {
+          name: "ST Residences Novena",
+          image_details: {
+            suffix: ".jpg",
+            count: 5,
+            prefix: "https://d2ey9sqrvkqdfs.cloudfront.net/050G/",
+            default_image_index: 1,
+          },
+        },
         // Use the passed props
         defaultValues: {
           DEST: dest,
@@ -122,12 +133,11 @@ export default function HotelCard({
           CURR: currency,
           CC: countryCode,
           LANG: lang,
-          DEST_LABEL: destLabel
-        }
-      }
+          DEST_LABEL: destLabel,
+        },
+      },
     });
   };
-
 
   return (
     <li className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition">
@@ -169,7 +179,9 @@ export default function HotelCard({
               <img key={i} src={starFilled} alt="★" className="w-3.5 h-3.5" />
             ))}
           </div>
-          {h.rating && <span className="font-medium">({h.rating.toFixed(1)})</span>}
+          {h.rating && (
+            <span className="font-medium">({h.rating.toFixed(1)})</span>
+          )}
           <span className="text-gray-500">({reviewLabel})</span>
         </div>
 
