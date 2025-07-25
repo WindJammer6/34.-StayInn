@@ -17,7 +17,9 @@ import {
   Wrench,
   AirVent,
   Info,
-  CigaretteOff,
+  Wifi,
+  Accessibility,
+  Leaf,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -70,6 +72,9 @@ const RoomCard = ({ room }) => {
     "need to know": Info,
     "club/executive level": Users,
     layout: LayoutGrid,
+    internet: Wifi,
+    accessibility: Accessibility,
+    eco: Leaf,
   };
 
   const replaceNode = (domNode) => {
@@ -94,18 +99,6 @@ const RoomCard = ({ room }) => {
           {Icon && <Icon className="w-4 h-4 text-primary flex-shrink-0" />}
           <strong>{domToReact(domNode.children)}</strong>
         </span>
-      );
-    }
-    if (
-      domNode.name === "p" &&
-      domNode.children.length === 1 &&
-      domNode.children[0].data?.trim().toLowerCase() === "non-smoking"
-    ) {
-      return (
-        <p className="flex items-center gap-1 text-sm text-gray-700">
-          <CigaretteOff className="w-4 h-4 text-primary flex-shrink-0" />
-          {domNode.children[0].data}
-        </p>
       );
     }
   };
@@ -315,10 +308,7 @@ const GoogleMapEmbed = ({ lat, lng }) => {
 const RoomDetails = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Get state without defaults first
   const state = location.state || {};
-  console.log("Location state:", state);
 
   const {
     hotelId,
@@ -344,11 +334,10 @@ const RoomDetails = () => {
     guests: guests || defaultValues.guests || "2",
   };
 
-  console.log("Effective params:", effectiveParams);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hotelData, setHotelData] = useState(passedHotelData || null);
+  const [showModal, setShowModal] = useState(false);
 
   const fetchRoomDetails = async () => {
     setLoading(true);
@@ -370,42 +359,67 @@ const RoomDetails = () => {
         }
       );
 
-      // Merge API response with existing data PRESERVING CRITICAL FIELDS
-      setHotelData(prev => ({
-        ...prev, // Keep all existing data
-        ...response.data, // Add new API data
-        // Explicitly preserve these fields if they exist in initial data
-        name: prev.name || response.data.name,
-        image_details: prev.image_details || response.data.image_details,
-        latitude: prev.latitude || response.data.latitude,
-        longitude: prev.longitude || response.data.longitude,
-        // Rooms should come from API
-        rooms: response.data.rooms?.map(room => ({
+      setHotelData((prev) => ({
+        ...prev,
+        ...response.data,
+        name: prev?.name || response.data.name,
+        image_details: prev?.image_details || response.data.image_details,
+        latitude: prev?.latitude || response.data.latitude,
+        longitude: prev?.longitude || response.data.longitude,
+        rooms: response.data.rooms?.map((room) => ({
           ...room,
-          images: room.images || []
+          images: room.images || [],
         })),
-        // Mark as completed
-        completed: true
+        completed: true,
       }));
     } catch (err) {
       console.error("Failed to load hotel details:", err);
-      setError(err.message || "Failed to load hotel details. Please try again.");
+      setError(
+        err.message || "Failed to load hotel details. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-  // Only fetch if we don't have complete data
-  if (!hotelData?.rooms || !hotelData?.completed) {
-    console.log("Fetching room details...");
-    fetchRoomDetails();
-  }
-}, [hotelId, destinationId, checkin, checkout]); 
+    if (!hotelData?.rooms || !hotelData?.completed) {
+      fetchRoomDetails();
+    }
+  }, [hotelId, destinationId, checkin, checkout]);
 
   const guestCounts = guests.split("|").map(Number);
   const totalGuests = guestCounts.reduce((a, b) => a + b, 0);
   const roomCount = guestCounts.length;
+
+  const images = [];
+  if (hotelData?.image_details?.count > 0) {
+    images.push(
+      ...Array.from({ length: hotelData.image_details.count }).map(
+        (_, idx) => ({
+          src: `${hotelData.image_details.prefix}${idx}${hotelData.image_details.suffix}`,
+          alt: `Hotel image ${idx + 1}`,
+          key: `details-${idx}`,
+        })
+      )
+    );
+  } else if (hotelData?.images?.length > 0) {
+    images.push(
+      ...hotelData.images.map((img, idx) => ({
+        src: img.url || img.high_resolution_url,
+        alt: `Hotel image ${idx + 1}`,
+        key: `direct-${idx}`,
+      }))
+    );
+  } else if (hotelData?.rooms?.[0]?.images?.length > 0) {
+    images.push(
+      ...hotelData.rooms[0].images.map((img, idx) => ({
+        src: img.url || img.high_resolution_url,
+        alt: `Room image ${idx + 1}`,
+        key: `room-${idx}`,
+      }))
+    );
+  }
 
   if (loading) {
     return (
@@ -435,73 +449,55 @@ const RoomDetails = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="pt-30 mx-auto px-4 py-8 space-y-6 max-w-6xl">
-        <GoogleMapEmbed
-          lat={hotelData.latitude || 1.318685}
-          lng={hotelData.longitude || 103.847882}
-        />
+        {/* Hotel Name */}
+        <h1 className="text-2xl font-bold mb-4">{hotelData.name}</h1>
 
-        {/* Hotel Title and Images */}
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold">{hotelData.name}</h1>
-            {(() => {
-              // Try all possible image sources
-              const images = [];
-              
-              // 1. Check image_details pattern
-              if (hotelData.image_details?.count > 0) {
-                images.push(
-                  ...Array.from({ length: hotelData.image_details.count }).map((_, idx) => ({
-                    src: `${hotelData.image_details.prefix}${idx}${hotelData.image_details.suffix}`,
-                    alt: `Hotel image ${idx + 1}`,
-                    key: `details-${idx}`
-                  }))
-                );
-              }
-              // 2. Check direct images array
-              else if (hotelData.images?.length > 0) {
-                images.push(
-                  ...hotelData.images.map((img, idx) => ({
-                    src: img.url || img.high_resolution_url,
-                    alt: `Hotel image ${idx + 1}`,
-                    key: `direct-${idx}`
-                  }))
-                );
-              }
-              // 3. Check room images
-              else if (hotelData.rooms?.[0]?.images?.length > 0) {
-                images.push(
-                  ...hotelData.rooms[0].images.map((img, idx) => ({
-                    src: img.url || img.high_resolution_url,
-                    alt: `Room image ${idx + 1}`,
-                    key: `room-${idx}`
-                  }))
-                );
-              }
-
-              return images.length > 0 ? (
-                <div className="flex overflow-x-auto gap-4 py-2">
-                  {images.map((image) => (
-                    <div key={image.key} className="w-48 h-32 flex-shrink-0 relative">
-                      <img
-                        src={image.src}
-                        alt={image.alt}
-                        className="w-full h-full object-cover rounded shadow"
-                        onError={(e) => {
-                          e.currentTarget.src = "https://dummyimage.com/300x200/cccccc/000000&text=No+Image";
-                          e.currentTarget.className = "w-full h-full object-contain bg-gray-100 p-4 rounded shadow";
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="w-full h-32 bg-gray-200 flex items-center justify-center rounded">
-                  <ImageIcon className="w-6 h-6 text-gray-400" />
-                  <p className="text-gray-500 text-sm ml-2">No images available</p>
-                </div>
-              );
-            })()}
+        {/* Image + Map Grid */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col gap-2 w-full md:w-1/2">
+            <div className="w-full h-48 relative">
+              <img
+                src={images[0]?.src}
+                alt="Main Hotel"
+                className="w-full h-full object-cover rounded shadow"
+              />
+            </div>
+            <div className="flex gap-2">
+              <div className="w-1/2 h-24 relative">
+                <img
+                  src={images[1]?.src}
+                  alt="Secondary 1"
+                  className="w-full h-full object-cover rounded shadow"
+                />
+              </div>
+              <div
+                className="w-1/2 h-24 relative cursor-pointer"
+                onClick={() => setShowModal(true)}
+              >
+                <img
+                  src={images[2]?.src}
+                  alt="Secondary 2"
+                  className="w-full h-full object-cover rounded shadow"
+                />
+                {images.length > 3 && (
+                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded">
+                    <span className="text-white text-lg font-semibold">
+                      +{images.length - 3}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
+
+          {/* Map */}
+          <div className="w-full md:w-1/2">
+            <GoogleMapEmbed
+              lat={hotelData.latitude || 1.318685}
+              lng={hotelData.longitude || 103.847882}
+            />
+          </div>
+        </div>
 
         {/* Booking Summary */}
         <Card>
@@ -526,6 +522,33 @@ const RoomDetails = () => {
             ))}
           </CardContent>
         </Card>
+
+        {/* Modal for Full Gallery */}
+        {showModal && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowModal(false)}
+          >
+            <div
+              className="bg-white p-4 rounded shadow-lg max-h-[90vh] overflow-y-auto w-full max-w-4xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-bold mb-2 text-center">
+                Hotel Gallery
+              </h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {images.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img.src}
+                    alt={`Image ${idx + 1}`}
+                    className="w-full h-40 object-cover rounded"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Hotel Details */}
         <Card>
