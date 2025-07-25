@@ -292,7 +292,7 @@ const GoogleMapEmbed = ({ lat, lng }) => {
       <iframe
         title="Hotel Location"
         width="100%"
-        height="300"
+        height="325"
         style={{ border: 0 }}
         loading="lazy"
         allowFullScreen
@@ -338,6 +338,7 @@ const RoomDetails = () => {
   const [error, setError] = useState(null);
   const [hotelData, setHotelData] = useState(passedHotelData || null);
   const [showModal, setShowModal] = useState(false);
+  const [failedImages, setFailedImages] = useState(new Set());
 
   const fetchRoomDetails = async () => {
     setLoading(true);
@@ -358,6 +359,8 @@ const RoomDetails = () => {
           },
         }
       );
+
+      console.log("API response:", response.data);
 
       setHotelData((prev) => ({
         ...prev,
@@ -454,34 +457,46 @@ const RoomDetails = () => {
 
         {/* Image + Map Grid */}
         <div className="flex flex-col md:flex-row gap-4">
+          {/* Left Column: Images */}
           <div className="flex flex-col gap-2 w-full md:w-1/2">
-            <div className="w-full h-48 relative">
+            <div
+              className="relative w-full rounded overflow-hidden shadow"
+              style={{ height: "200px" }}
+            >
               <img
                 src={images[0]?.src}
                 alt="Main Hotel"
-                className="w-full h-full object-cover rounded shadow"
+                className="absolute inset-0 w-full h-full object-contain bg-black"
+                loading="lazy"
               />
             </div>
+
             <div className="flex gap-2">
-              <div className="w-1/2 h-24 relative">
+              <div
+                className="w-1/2 relative bg-black rounded overflow-hidden flex items-center justify-center"
+                style={{ height: "118px" }}
+              >
                 <img
                   src={images[1]?.src}
                   alt="Secondary 1"
-                  className="w-full h-full object-cover rounded shadow"
+                  className="object-contain max-w-full max-h-full"
+                  loading="lazy"
                 />
               </div>
               <div
-                className="w-1/2 h-24 relative cursor-pointer"
+                className="w-1/2 relative bg-black rounded overflow-hidden flex items-center justify-center cursor-pointer"
                 onClick={() => setShowModal(true)}
+                style={{ height: "118px" }}
               >
                 <img
                   src={images[2]?.src}
                   alt="Secondary 2"
-                  className="w-full h-full object-cover rounded shadow"
+                  className="object-contain max-w-full max-h-full"
+                  loading="lazy"
                 />
                 {images.length > 3 && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded">
-                    <span className="text-white text-lg font-semibold">
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded">
+                    <span className="text-white text-lg font-semibold drop-shadow">
                       +{images.length - 3}
                     </span>
                   </div>
@@ -490,7 +505,7 @@ const RoomDetails = () => {
             </div>
           </div>
 
-          {/* Map */}
+          {/* Right Column: Map */}
           <div className="w-full md:w-1/2">
             <GoogleMapEmbed
               lat={hotelData.latitude || 1.318685}
@@ -530,21 +545,46 @@ const RoomDetails = () => {
             onClick={() => setShowModal(false)}
           >
             <div
-              className="bg-white p-4 rounded shadow-lg max-h-[90vh] overflow-y-auto w-full max-w-4xl"
+              className="relative bg-white p-4 rounded shadow-lg max-h-[90vh] overflow-y-auto w-full max-w-4xl"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Close X Button */}
+              <button
+                className="absolute top-4 right-4 text-gray-600 hover:text-black"
+                onClick={() => setShowModal(false)}
+              >
+                <X className="w-6 h-6" />
+              </button>
+
               <h2 className="text-lg font-bold mb-2 text-center">
                 Hotel Gallery
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {images.map((img, idx) => (
-                  <img
-                    key={idx}
-                    src={img.src}
-                    alt={`Image ${idx + 1}`}
-                    className="w-full h-40 object-cover rounded"
-                  />
-                ))}
+                {images.map((img, idx) => {
+                  if (
+                    !img?.src ||
+                    img.src.trim() === "" ||
+                    failedImages.has(idx)
+                  )
+                    return null;
+
+                  return (
+                    <div
+                      key={idx}
+                      className="w-full aspect-video bg-black flex items-center justify-center rounded overflow-hidden"
+                    >
+                      <img
+                        src={img.src}
+                        alt={img.alt || `Image ${idx + 1}`}
+                        className="object-contain max-h-full max-w-full"
+                        loading="lazy"
+                        onError={() => {
+                          setFailedImages((prev) => new Set(prev).add(idx));
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
