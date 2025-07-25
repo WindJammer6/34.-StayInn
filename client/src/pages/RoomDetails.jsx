@@ -354,12 +354,11 @@ const RoomDetails = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log("Making API call with params:", effectiveParams);
       const response = await axios.get(
         `http://localhost:8080/api/hotels/${effectiveParams.hotelId}/price`,
         {
           params: {
-            destination_id: effectiveParams.destinationId,
+            destination_id: effectiveParams.destinationId || effectiveParams.DEST,
             checkin: effectiveParams.checkin,
             checkout: effectiveParams.checkout,
             lang: effectiveParams.lang,
@@ -370,24 +369,34 @@ const RoomDetails = () => {
           },
         }
       );
-      console.log("API response:", response.data);
-      setHotelData(response.data);
+
+      // Normalize the API response to match your initial data structure
+      const normalizedData = {
+        ...response.data,
+        // Ensure images are in the expected format
+        image_details: response.data.image_details || passedHotelData?.image_details,
+        rooms: response.data.rooms?.map(room => ({
+          ...room,
+          images: room.images || [] // Ensure images array exists
+        }))
+      };
+
+      setHotelData(normalizedData);
     } catch (err) {
       console.error("Failed to load hotel details:", err);
-      setError(
-        err.message || "Failed to load hotel details. Please try again."
-      );
+      setError(err.message || "Failed to load hotel details. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (!passedHotelData) {
-      console.log("Fetching room details...");
-      fetchRoomDetails();
-    }
-  }, []); // Empty dependency array to run only once on mount
+  // Only fetch if we don't have complete data
+  if (!hotelData?.rooms || !hotelData?.completed) {
+    console.log("Fetching room details...");
+    fetchRoomDetails();
+  }
+}, [hotelId, destinationId, checkin, checkout]); 
 
   const guestCounts = guests.split("|").map(Number);
   const totalGuests = guestCounts.reduce((a, b) => a + b, 0);
@@ -427,27 +436,67 @@ const RoomDetails = () => {
         />
 
         {/* Hotel Title and Images */}
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold">{hotelData.name}</h1>
-          {hotelData.image_details?.count > 0 ? (
-            <div className="flex overflow-x-auto gap-4 py-2">
-              {Array.from({ length: hotelData.image_details.count }).map(
-                (_, idx) => (
-                  <img
-                    key={idx}
-                    src={`${hotelData.image_details.prefix}${idx}${hotelData.image_details.suffix}`}
-                    alt={`Hotel image ${idx + 1}`}
-                    className="w-48 h-32 object-cover rounded shadow"
-                  />
-                )
-              )}
-            </div>
-          ) : (
-            <div className="w-full h-32 bg-gray-200 flex items-center justify-center rounded">
-              <p className="text-gray-500 text-sm">No images available</p>
-            </div>
-          )}
-        </div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold">{hotelData.name}</h1>
+            {(() => {
+              // Try all possible image sources
+              const images = [];
+              
+              // 1. Check image_details pattern
+              if (hotelData.image_details?.count > 0) {
+                images.push(
+                  ...Array.from({ length: hotelData.image_details.count }).map((_, idx) => ({
+                    src: `${hotelData.image_details.prefix}${idx}${hotelData.image_details.suffix}`,
+                    alt: `Hotel image ${idx + 1}`,
+                    key: `details-${idx}`
+                  }))
+                );
+              }
+              // 2. Check direct images array
+              else if (hotelData.images?.length > 0) {
+                images.push(
+                  ...hotelData.images.map((img, idx) => ({
+                    src: img.url || img.high_resolution_url,
+                    alt: `Hotel image ${idx + 1}`,
+                    key: `direct-${idx}`
+                  }))
+                );
+              }
+              // 3. Check room images
+              else if (hotelData.rooms?.[0]?.images?.length > 0) {
+                images.push(
+                  ...hotelData.rooms[0].images.map((img, idx) => ({
+                    src: img.url || img.high_resolution_url,
+                    alt: `Room image ${idx + 1}`,
+                    key: `room-${idx}`
+                  }))
+                );
+              }
+
+              return images.length > 0 ? (
+                <div className="flex overflow-x-auto gap-4 py-2">
+                  {images.map((image) => (
+                    <div key={image.key} className="w-48 h-32 flex-shrink-0 relative">
+                      <img
+                        src={image.src}
+                        alt={image.alt}
+                        className="w-full h-full object-cover rounded shadow"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://dummyimage.com/300x200/cccccc/000000&text=No+Image";
+                          e.currentTarget.className = "w-full h-full object-contain bg-gray-100 p-4 rounded shadow";
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="w-full h-32 bg-gray-200 flex items-center justify-center rounded">
+                  <ImageIcon className="w-6 h-6 text-gray-400" />
+                  <p className="text-gray-500 text-sm ml-2">No images available</p>
+                </div>
+              );
+            })()}
+          </div>
 
         {/* Booking Summary */}
         <Card>

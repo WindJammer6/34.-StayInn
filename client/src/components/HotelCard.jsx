@@ -105,25 +105,17 @@ export default function HotelCard({
   };
 
   const handleSelect = () => {
-    navigate("/detail", {
+    navigate('/detail', {
       state: {
         hotelId: h.id,
-        destinationId: h.destination_id || "WD0M",
+        destinationId: h.destination_id || dest,
         checkin,
         checkout,
-        lang: lang || "en_US",
-        currency: currency || "SGD",
-        countryCode: countryCode || "SG",
-        guests: guests || "2",
-        hotelData: {
-          name: "ST Residences Novena",
-          image_details: {
-            suffix: ".jpg",
-            count: 5,
-            prefix: "https://d2ey9sqrvkqdfs.cloudfront.net/050G/",
-            default_image_index: 1,
-          },
-        },
+        lang: lang,
+        currency: currency,
+        countryCode: countryCode,
+        guests: guests,
+        hotelData: h,
         // Use the passed props
         defaultValues: {
           DEST: dest,
@@ -133,11 +125,12 @@ export default function HotelCard({
           CURR: currency,
           CC: countryCode,
           LANG: lang,
-          DEST_LABEL: destLabel,
-        },
-      },
+          DEST_LABEL: destLabel
+        }
+      }
     });
   };
+
 
   return (
     <li className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition">
