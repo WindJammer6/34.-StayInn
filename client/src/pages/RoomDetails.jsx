@@ -358,7 +358,7 @@ const RoomDetails = () => {
         `http://localhost:8080/api/hotels/${effectiveParams.hotelId}/price`,
         {
           params: {
-            destination_id: effectiveParams.destinationId || effectiveParams.DEST,
+            destination_id: effectiveParams.destinationId,
             checkin: effectiveParams.checkin,
             checkout: effectiveParams.checkout,
             lang: effectiveParams.lang,
@@ -370,18 +370,23 @@ const RoomDetails = () => {
         }
       );
 
-      // Normalize the API response to match your initial data structure
-      const normalizedData = {
-        ...response.data,
-        // Ensure images are in the expected format
-        image_details: response.data.image_details || passedHotelData?.image_details,
+      // Merge API response with existing data PRESERVING CRITICAL FIELDS
+      setHotelData(prev => ({
+        ...prev, // Keep all existing data
+        ...response.data, // Add new API data
+        // Explicitly preserve these fields if they exist in initial data
+        name: prev.name || response.data.name,
+        image_details: prev.image_details || response.data.image_details,
+        latitude: prev.latitude || response.data.latitude,
+        longitude: prev.longitude || response.data.longitude,
+        // Rooms should come from API
         rooms: response.data.rooms?.map(room => ({
           ...room,
-          images: room.images || [] // Ensure images array exists
-        }))
-      };
-
-      setHotelData(normalizedData);
+          images: room.images || []
+        })),
+        // Mark as completed
+        completed: true
+      }));
     } catch (err) {
       console.error("Failed to load hotel details:", err);
       setError(err.message || "Failed to load hotel details. Please try again.");
