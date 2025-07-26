@@ -1,8 +1,33 @@
 import Fuse from 'fuse.js';
 
+// Detect environment
+let postMessageFunc;
+let onMessageFunc;
+
+const isNode =
+  typeof process !== 'undefined' &&
+  process.versions != null &&
+  process.versions.node != null;
+
+if (isNode) {
+  // Node.js (Jest / worker_threads)
+  const { parentPort } = await import('worker_threads');
+  postMessageFunc = parentPort.postMessage.bind(parentPort);
+  onMessageFunc = (handler) => {
+    parentPort.on('message', handler);
+  };
+} else {
+  // Browser Worker
+  postMessageFunc = self.postMessage.bind(self);
+  onMessageFunc = (handler) => {
+    self.onmessage = (e) => handler(e.data);
+  };
+}
+
 let fuse = null;
-onmessage = function (e) {
-  const { type, payload } = e.data;
+
+onMessageFunc((data) => {
+  const { type, payload } = data;
 
   // instantiates Fuse
   if (type === 'init') {
@@ -11,11 +36,14 @@ onmessage = function (e) {
       threshold: 0.3,
       shouldSort: true,
     });
+    return;
   }
 
-  // runs Fuse fuzzy search on payload and returns results
   if (type === 'search' && fuse) {
-    const results = fuse.search(payload);
-    self.postMessage({query: payload, results: results.map(r => r.item).slice(0, 8)});
+    const results = fuse.search(payload.trim());
+    postMessageFunc({
+      query: payload,
+      results: results.map((r) => r.item).slice(0, 8),
+    });
   }
-};
+});

@@ -36,16 +36,9 @@ useEffect(() => {
         type: "init",
         payload: destinations,
     });
-
     // Handle results
     worker.current.onmessage = (e) => {
-        if (searchTerm !== '') {
-            setSuggestions([]);
-            setSelectedUID(''); // clear UID if input is cleared
-            return;
-        } else {
-            setSuggestions(e.data.results);
-        }
+        setSuggestions(e.data.results);
     }
     return () => worker.current.terminate();
 }, [destinations]);
