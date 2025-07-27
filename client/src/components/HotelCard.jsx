@@ -133,7 +133,7 @@ export default function HotelCard({
 
 
   return (
-    <li className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition">
+    <li className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition" data-testid="hotel-card">
       {/* ── Fixed-size image (180 × 150) ───────────────────── */}
       <img
         src={getImageUrl(h)}
