@@ -71,7 +71,7 @@ describe("Hotels UI test", () => {
 
 
     // Display fallback image
-    test('Cards are rendered with all hotel information', async () => {
+    test('Fallback image is displayed for hotels without proper image url', async () => {
         // Wait for the loading spinner to disappear
         await waitFor(() => {
             expect(screen.queryByText(/Loading hotels/i)).not.toBeInTheDocument();
