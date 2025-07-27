@@ -105,7 +105,7 @@ export default function HotelCard({
   };
 
   const handleSelect = () => {
-    navigate('/detail', {
+    navigate("/detail", {
       state: {
         hotelId: h.id,
         destinationId: h.destination_id || dest,
@@ -125,15 +125,17 @@ export default function HotelCard({
           CURR: currency,
           CC: countryCode,
           LANG: lang,
-          DEST_LABEL: destLabel
-        }
-      }
+          DEST_LABEL: destLabel,
+        },
+      },
     });
   };
 
-
   return (
-    <li className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition" data-testid="hotel-card">
+    <li
+      className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition"
+      data-testid="hotel-card"
+    >
       {/* ── Fixed-size image (180 × 150) ───────────────────── */}
       <img
         src={getImageUrl(h)}

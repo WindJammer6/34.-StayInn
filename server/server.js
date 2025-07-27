@@ -19,10 +19,22 @@ app.get("/api/hotels/:id/price", async (req, res) => {
     lang,
     currency,
     country_code,
-    partner_id = 1,
   } = req.query;
 
-  const ascendaUrl = `https://hotelapi.loyalty.dev/api/hotels/${hotelId}/price?destination_id=${destination_id}&checkin=${checkin}&checkout=${checkout}&lang=${lang}&currency=${currency}&country_code=${country_code}&guests=${guests}&partner_id=${partner_id}`;
+  const ascendaUrl =
+    `https://hotelapi.loyalty.dev/api/hotels/${hotelId}/price?` +
+    new URLSearchParams({
+      destination_id,
+      checkin,
+      checkout,
+      lang,
+      currency,
+      country_code,
+      guests,
+      partner_id: "1089",
+      landing_page: "wl-acme-earn",
+      product_type: "earn",
+    }).toString();
 
   try {
     const response = await axios.get(ascendaUrl);
@@ -37,20 +49,52 @@ app.listen(8080, () => {
   console.log("Server started on port 8080");
 });
 
-// ➊ Forward static hotel list
 app.get("/api/hotels", async (req, res) => {
-  const { destination_id } = req.query;
-  const url = `https://hotelapi.loyalty.dev/api/hotels?destination_id=${destination_id}`;
-  const { data } = await axios.get(url);
-  res.json(data);
+  const {
+    destination_id,
+    lang = "en_US",
+    currency = "SGD",
+    country_code = "SG",
+    guests = "2",
+  } = req.query;
+
+  const url =
+    "https://hotelapi.loyalty.dev/api/hotels?" +
+    new URLSearchParams({
+      destination_id,
+      lang,
+      currency,
+      country_code,
+      guests,
+      partner_id: "1089",
+      landing_page: "wl-acme-earn",
+      product_type: "earn",
+    }).toString();
+
+  try {
+    const { data } = await axios.get(url);
+    res.json(data);
+  } catch (error) {
+    console.error("Error fetching hotel list:", error.message);
+    res.status(500).json({ error: "Failed to fetch hotel list" });
+  }
 });
 
-// ➋ Forward cheapest-price list
 app.get("/api/hotels/prices", async (req, res) => {
-  // pass everything through except partner_id (hard-code)
   const url =
     "https://hotelapi.loyalty.dev/api/hotels/prices?" +
-    new URLSearchParams({ ...req.query, partner_id: 1 }).toString();
-  const { data } = await axios.get(url);
-  res.json(data);
+    new URLSearchParams({
+      ...req.query,
+      partner_id: "1089",
+      landing_page: "wl-acme-earn",
+      product_type: "earn",
+    }).toString();
+
+  try {
+    const { data } = await axios.get(url);
+    res.json(data);
+  } catch (error) {
+    console.error("Error fetching hotel prices:", error);
+    res.status(500).json({ error: "Failed to fetch hotel prices" });
+  }
 });

@@ -355,7 +355,9 @@ const RoomDetails = () => {
             currency: effectiveParams.currency,
             country_code: effectiveParams.countryCode,
             guests: effectiveParams.guests,
-            partner_id: "1",
+            partner_id: "1089",
+            landing_page: "wl-acme-earn",
+            product_type: "earn",
           },
         }
       );

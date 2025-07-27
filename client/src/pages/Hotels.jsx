@@ -282,7 +282,9 @@ export default function Hotels() {
         );
 
         if (!detailsResponse.ok)
-          throw new Error("Failed to fetch hotel details");
+          throw new Error(
+            "Failed to fetch hotel details: " + detailsResponse.status
+          );
 
         const detailsData = await detailsResponse.json();
 
