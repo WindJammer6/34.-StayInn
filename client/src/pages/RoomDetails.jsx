@@ -28,6 +28,7 @@ import { Separator } from "@/components/ui/separator";
 import parse, { domToReact } from "html-react-parser";
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
+import defaultHotelImg from "@/assets/hotelImage.png";
 
 // -----------------------------
 // RoomCard Component
@@ -457,14 +458,18 @@ const RoomDetails = () => {
               <img
                 src={validImages[0]?.src}
                 alt={validImages[0]?.alt}
-                className="absolute inset-0 w-full h-full object-contain bg-black"
+                className="absolute inset-0 w-full h-full object-contain bg-gray-100"
                 loading="lazy"
-                onError={() => setFailedImages((f) => new Set(f).add(0))}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = defaultHotelImg || DEFAULT_ROOM_IMG;
+                  e.currentTarget.alt = "Default room image";
+                }}
               />
             </div>
             <div className="flex gap-2">
               <div
-                className="w-1/2 relative bg-black rounded overflow-hidden flex items-center justify-center"
+                className="w-1/2 relative bg-gray-100 rounded overflow-hidden flex items-center justify-center"
                 style={{ height: "118px" }}
               >
                 <img
@@ -472,11 +477,15 @@ const RoomDetails = () => {
                   alt={validImages[1]?.alt}
                   className="object-contain max-w-full max-h-full"
                   loading="lazy"
-                  onError={() => setFailedImages((f) => new Set(f).add(1))}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = defaultHotelImg || DEFAULT_ROOM_IMG;
+                    e.currentTarget.alt = "Default room image";
+                  }}
                 />
               </div>
               <div
-                className="w-1/2 relative bg-black rounded overflow-hidden flex items-center justify-center cursor-pointer"
+                className="w-1/2 relative bg-gray-100 rounded overflow-hidden flex items-center justify-center cursor-pointer"
                 style={{ height: "118px" }}
                 onClick={() => setShowModal(true)}
               >
@@ -485,7 +494,11 @@ const RoomDetails = () => {
                   alt={validImages[2]?.alt}
                   className="object-contain max-w-full max-h-full"
                   loading="lazy"
-                  onError={() => setFailedImages((f) => new Set(f).add(2))}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = defaultHotelImg || DEFAULT_ROOM_IMG;
+                    e.currentTarget.alt = "Default room image";
+                  }}
                 />
                 {remainingImages > 0 && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded">
@@ -554,13 +567,19 @@ const RoomDetails = () => {
                 {validImages.map((img, idx) => (
                   <div
                     key={idx}
-                    className="w-full aspect-video bg-black flex items-center justify-center rounded overflow-hidden"
+                    className="w-full aspect-video bg-gray-100 flex items-center justify-center rounded overflow-hidden"
                   >
                     <img
                       src={img.src}
                       alt={img.alt}
                       className="object-contain max-h-full max-w-full"
                       loading="lazy"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src =
+                          defaultHotelImg || DEFAULT_ROOM_IMG;
+                        e.currentTarget.alt = "Default room image";
+                      }}
                     />
                   </div>
                 ))}
