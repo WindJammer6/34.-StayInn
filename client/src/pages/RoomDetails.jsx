@@ -35,7 +35,7 @@ import defaultHotelImg from "@/assets/hotelImage.png";
 // -----------------------------
 const RoomCard = ({ room }) => {
   const [showModal, setShowModal] = useState(false);
-  const [currentImage, setCurrentImage] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [showMore, setShowMore] = useState(false);
   const [sliderRef, instanceRef] = useKeenSlider({
     loop: true,
@@ -126,7 +126,7 @@ const RoomCard = ({ room }) => {
                             className="keen-slider__slide cursor-pointer"
                             onClick={() => {
                               setShowModal(true);
-                              setCurrentImage(url);
+                              setCurrentIndex(i);
                             }}
                           >
                             <img
@@ -263,17 +263,45 @@ const RoomCard = ({ room }) => {
       </Card>
 
       {/* Modal */}
-      {showModal && currentImage && (
+      {showModal && (
         <div
           onClick={() => setShowModal(false)}
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 cursor-pointer p-4"
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
         >
+          {/* ← Left button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentIndex((ci) => (ci - 1 + images.length) % images.length);
+            }}
+            className="absolute left-4 text-white text-4xl p-2 hover:opacity-75"
+          >
+            <ChevronLeft />
+          </button>
+
+          {/* The current image */}
           <img
-            src={currentImage}
-            alt="Room image"
+            src={
+              images[currentIndex].high_resolution_url ||
+              images[currentIndex].url
+            }
+            alt={`Room image ${currentIndex + 1}`}
             className="max-h-[90vh] max-w-[90vw] object-contain rounded shadow-lg"
             onClick={(e) => e.stopPropagation()}
           />
+
+          {/* → Right button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setCurrentIndex((ci) => (ci + 1) % images.length);
+            }}
+            className="absolute right-4 text-white text-4xl p-2 hover:opacity-75"
+          >
+            <ChevronRight />
+          </button>
+
+          {/* × Close */}
           <button
             onClick={() => setShowModal(false)}
             className="absolute top-4 right-4 text-white text-3xl font-bold"
@@ -462,7 +490,7 @@ const RoomDetails = () => {
                 loading="lazy"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
-                  e.currentTarget.src = defaultHotelImg || DEFAULT_ROOM_IMG;
+                  e.currentTarget.src = defaultHotelImg;
                   e.currentTarget.alt = "Default room image";
                 }}
               />
@@ -479,7 +507,7 @@ const RoomDetails = () => {
                   loading="lazy"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src = defaultHotelImg || DEFAULT_ROOM_IMG;
+                    e.currentTarget.src = defaultHotelImg;
                     e.currentTarget.alt = "Default room image";
                   }}
                 />
@@ -496,7 +524,7 @@ const RoomDetails = () => {
                   loading="lazy"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
-                    e.currentTarget.src = defaultHotelImg || DEFAULT_ROOM_IMG;
+                    e.currentTarget.src = defaultHotelImg;
                     e.currentTarget.alt = "Default room image";
                   }}
                 />
@@ -576,8 +604,7 @@ const RoomDetails = () => {
                       loading="lazy"
                       onError={(e) => {
                         e.currentTarget.onerror = null;
-                        e.currentTarget.src =
-                          defaultHotelImg || DEFAULT_ROOM_IMG;
+                        e.currentTarget.src = defaultHotelImg;
                         e.currentTarget.alt = "Default room image";
                       }}
                     />
