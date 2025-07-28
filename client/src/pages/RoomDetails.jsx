@@ -361,16 +361,9 @@ const RoomDetails = () => {
           },
         }
       );
-
-      console.log("API response:", response.data);
-
       setHotelData((prev) => ({
         ...prev,
         ...response.data,
-        name: prev?.name || response.data.name,
-        image_details: prev?.image_details || response.data.image_details,
-        latitude: prev?.latitude || response.data.latitude,
-        longitude: prev?.longitude || response.data.longitude,
         rooms: response.data.rooms?.map((room) => ({
           ...room,
           images: room.images || [],
@@ -378,10 +371,8 @@ const RoomDetails = () => {
         completed: true,
       }));
     } catch (err) {
-      console.error("Failed to load hotel details:", err);
-      setError(
-        err.message || "Failed to load hotel details. Please try again."
-      );
+      console.error(err);
+      setError("Failed to load hotel details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -393,7 +384,7 @@ const RoomDetails = () => {
     }
   }, [hotelId, destinationId, checkin, checkout]);
 
-  const guestCounts = guests.split("|").map(Number);
+  const guestCounts = effectiveParams.guests.split("|").map(Number);
   const totalGuests = guestCounts.reduce((a, b) => a + b, 0);
   const roomCount = guestCounts.length;
 
@@ -404,27 +395,28 @@ const RoomDetails = () => {
         (_, idx) => ({
           src: `${hotelData.image_details.prefix}${idx}${hotelData.image_details.suffix}`,
           alt: `Hotel image ${idx + 1}`,
-          key: `details-${idx}`,
         })
       )
     );
   } else if (hotelData?.images?.length > 0) {
     images.push(
-      ...hotelData.images.map((img, idx) => ({
-        src: img.url || img.high_resolution_url,
-        alt: `Hotel image ${idx + 1}`,
-        key: `direct-${idx}`,
+      ...hotelData.images.map((img) => ({
+        src: img.high_resolution_url || img.url,
+        alt: img.alt || "Hotel image",
       }))
     );
   } else if (hotelData?.rooms?.[0]?.images?.length > 0) {
     images.push(
-      ...hotelData.rooms[0].images.map((img, idx) => ({
-        src: img.url || img.high_resolution_url,
-        alt: `Room image ${idx + 1}`,
-        key: `room-${idx}`,
+      ...hotelData.rooms[0].images.map((img) => ({
+        src: img.high_resolution_url || img.url,
+        alt: img.alt || "Room image",
       }))
     );
   }
+
+  const validImages = images.filter((_, idx) => !failedImages.has(idx));
+  const visibleCount = 3;
+  const remainingImages = Math.max(0, validImages.length - visibleCount);
 
   if (loading) {
     return (
@@ -441,9 +433,7 @@ const RoomDetails = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
         <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
-        <p className="text-muted-foreground mb-6">
-          {error || "Hotel data unavailable."}
-        </p>
+        <p className="text-muted-foreground mb-6">{error}</p>
         <Button onClick={() => navigate(-1)} variant="default">
           <ArrowLeft className="w-4 h-4 mr-2" /> Go Back
         </Button>
@@ -454,52 +444,53 @@ const RoomDetails = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="pt-30 mx-auto px-4 py-8 space-y-6 max-w-6xl">
-        {/* Hotel Name */}
         <h1 className="text-2xl font-bold mb-4">{hotelData.name}</h1>
 
         {/* Image + Map Grid */}
         <div className="flex flex-col md:flex-row gap-4">
-          {/* Left Column: Images */}
+          {/* Left: Image Grid */}
           <div className="flex flex-col gap-2 w-full md:w-1/2">
             <div
               className="relative w-full rounded overflow-hidden shadow"
               style={{ height: "200px" }}
             >
               <img
-                src={images[0]?.src}
-                alt="Main Hotel"
+                src={validImages[0]?.src}
+                alt={validImages[0]?.alt}
                 className="absolute inset-0 w-full h-full object-contain bg-black"
                 loading="lazy"
+                onError={() => setFailedImages((f) => new Set(f).add(0))}
               />
             </div>
-
             <div className="flex gap-2">
               <div
                 className="w-1/2 relative bg-black rounded overflow-hidden flex items-center justify-center"
                 style={{ height: "118px" }}
               >
                 <img
-                  src={images[1]?.src}
-                  alt="Secondary 1"
+                  src={validImages[1]?.src}
+                  alt={validImages[1]?.alt}
                   className="object-contain max-w-full max-h-full"
                   loading="lazy"
+                  onError={() => setFailedImages((f) => new Set(f).add(1))}
                 />
               </div>
               <div
                 className="w-1/2 relative bg-black rounded overflow-hidden flex items-center justify-center cursor-pointer"
-                onClick={() => setShowModal(true)}
                 style={{ height: "118px" }}
+                onClick={() => setShowModal(true)}
               >
                 <img
-                  src={images[2]?.src}
-                  alt="Secondary 2"
+                  src={validImages[2]?.src}
+                  alt={validImages[2]?.alt}
                   className="object-contain max-w-full max-h-full"
                   loading="lazy"
+                  onError={() => setFailedImages((f) => new Set(f).add(2))}
                 />
-                {images.length > 3 && (
+                {remainingImages > 0 && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded">
                     <span className="text-white text-lg font-semibold drop-shadow">
-                      +{images.length - 3}
+                      +{remainingImages}
                     </span>
                   </div>
                 )}
@@ -507,7 +498,7 @@ const RoomDetails = () => {
             </div>
           </div>
 
-          {/* Right Column: Map */}
+          {/* Right: Map */}
           <div className="w-full md:w-1/2">
             <GoogleMapEmbed
               lat={hotelData.latitude || 1.318685}
@@ -533,14 +524,14 @@ const RoomDetails = () => {
                 {i > 0 && <Separator />}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{label}</span>
-                  <span>{val || "-"}</span>
+                  <span>{val}</span>
                 </div>
               </div>
             ))}
           </CardContent>
         </Card>
 
-        {/* Modal for Full Gallery */}
+        {/* Full Gallery Modal */}
         {showModal && (
           <div
             className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
@@ -550,43 +541,29 @@ const RoomDetails = () => {
               className="relative bg-white p-4 rounded shadow-lg max-h-[90vh] overflow-y-auto w-full max-w-4xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Close X Button */}
               <button
                 className="absolute top-4 right-4 text-gray-600 hover:text-black"
                 onClick={() => setShowModal(false)}
               >
                 <X className="w-6 h-6" />
               </button>
-
               <h2 className="text-lg font-bold mb-2 text-center">
                 Hotel Gallery
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {images.map((img, idx) => {
-                  if (
-                    !img?.src ||
-                    img.src.trim() === "" ||
-                    failedImages.has(idx)
-                  )
-                    return null;
-
-                  return (
-                    <div
-                      key={idx}
-                      className="w-full aspect-video bg-black flex items-center justify-center rounded overflow-hidden"
-                    >
-                      <img
-                        src={img.src}
-                        alt={img.alt || `Image ${idx + 1}`}
-                        className="object-contain max-h-full max-w-full"
-                        loading="lazy"
-                        onError={() => {
-                          setFailedImages((prev) => new Set(prev).add(idx));
-                        }}
-                      />
-                    </div>
-                  );
-                })}
+                {validImages.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="w-full aspect-video bg-black flex items-center justify-center rounded overflow-hidden"
+                  >
+                    <img
+                      src={img.src}
+                      alt={img.alt}
+                      className="object-contain max-h-full max-w-full"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -620,11 +597,9 @@ const RoomDetails = () => {
           </CardHeader>
           <CardContent>
             {hotelData.rooms?.length > 0 ? (
-              <div className="space-y-4">
-                {hotelData.rooms.map((r, i) => (
-                  <RoomCard key={r.key || i} room={r} />
-                ))}
-              </div>
+              hotelData.rooms.map((r, i) => (
+                <RoomCard key={r.key || i} room={r} />
+              ))
             ) : (
               <p className="text-muted-foreground text-center py-8">
                 No rooms available.
