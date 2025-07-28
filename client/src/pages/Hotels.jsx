@@ -101,96 +101,6 @@ const FilterRow = ({ label, checked, onToggle }) => (
   </label>
 );
 
-const HotelCard = ({ hotel, checkin, checkout }) => {
-  const getImageUrl = () => {
-    if (hotel.image_details?.prefix && hotel.image_details?.count > 0) {
-      return `${hotel.image_details.prefix}${hotel.default_image_index || 1}${
-        hotel.image_details.suffix || ".jpg"
-      }`;
-    }
-    return "https://via.placeholder.com/300x200?text=No+Image";
-  };
-
-  // Format price display
-  const formatPrice = (price) => {
-    if (price === undefined || price === null) {
-      // Try alternative price fields if lowest_price isn't available
-      return formatPrice(
-        hotel.price || hotel.converted_price || hotel.lowest_converted_price
-      );
-    }
-    return new Intl.NumberFormat("en-SG", {
-      style: "currency",
-      currency: CURR,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price);
-  };
-
-  return (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="md:w-1/3">
-            <img
-              src={getImageUrl()}
-              alt={hotel.name}
-              className="w-full h-48 object-cover rounded-md"
-            />
-          </div>
-          <div className="md:w-2/3">
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-semibold">{hotel.name}</h2>
-                <div className="flex items-center mt-1">
-                  <span className="text-yellow-500">
-                    {"★".repeat(Math.round(hotel.rating || 0))}
-                  </span>
-                  <span className="text-sm text-gray-500 ml-1">
-                    ({hotel.rating?.toFixed(1) || "N/A"})
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 mt-1">{hotel.address}</p>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-blue-600">
-                  {formatPrice(hotel.lowest_price)}
-                </div>
-                <p className="text-sm text-gray-500">per night</p>
-                {hotel.free_cancellation && (
-                  <p className="text-xs text-green-600 mt-1">
-                    Free cancellation
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {hotel.description && (
-              <div className="mt-4 text-sm text-gray-700">
-                <h3 className="font-medium mb-1">Description:</h3>
-                <div className="prose prose-sm max-w-none">
-                  {parse(hotel.description, {
-                    replace: (domNode) => {
-                      if (domNode.type === "tag" && domNode.name === "br") {
-                        return <br />;
-                      }
-                      return domNode;
-                    },
-                  })}
-                </div>
-              </div>
-            )}
-
-            <div className="mt-4 flex justify-end">
-              <Button>View Deal</Button>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
-
 const Filters = ({ draft, onChangeDraft, onApply }) => {
   const patch = (obj) => onChangeDraft({ ...draft, ...obj });
 
@@ -252,6 +162,18 @@ const Filters = ({ draft, onChangeDraft, onApply }) => {
       </CardContent>
     </Card>
   );
+};
+
+/** keep only hotels that have at least one valid cash price */
+const hasPrice = (h) => {
+  return (
+    h.lowest_price ??
+    h.price ??
+    h.lowest_converted_price ??
+    h.converted_price ??
+    h.max_cash_payment ??
+    h.coverted_max_cash_payment
+  ) != null;
 };
 
 export default function Hotels() {
@@ -332,7 +254,9 @@ export default function Hotels() {
   }, []);
 
   const sortedHotels = useMemo(() => {
-    let filtered = hotels.filter((h) => {
+    let filtered = hotels
+      .filter(hasPrice)
+      .filter((h) => {
       // Price range filter
       if (filters.priceRanges.length) {
         const inRange = filters.priceRanges.some((label) => {
@@ -376,17 +300,20 @@ export default function Hotels() {
       case "highest-price":
         filtered.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
         break;
-      case "star-rating":
+      case "star-desc":
         filtered.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
         break;
-      case "distance":
-        filtered.sort((a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9));
+      case "star-asc":
+        filtered.sort((a, b) => (a.rating ?? Infinity) - (b.rating ?? Infinity));
         break;
-      case "top-reviewed":
+      case "guest-desc":
         filtered.sort(
-          (a, b) =>
-            (b.trustyou?.score?.overall ?? 0) -
-            (a.trustyou?.score?.overall ?? 0)
+          (a, b) => (b.trustyou?.score?.overall ?? 0) - (a.trustyou?.score?.overall ?? 0)
+        );
+        break;
+      case "guest-asc":
+        filtered.sort(
+          (a, b) => (a.trustyou?.score?.overall ?? Infinity) - (b.trustyou?.score?.overall ?? Infinity)
         );
         break;
       default:
@@ -496,9 +423,10 @@ export default function Hotels() {
               >
                 <option value="lowest-price">Lowest price</option>
                 <option value="highest-price">Highest price</option>
-                <option value="star-rating">Star rating</option>
-                <option value="distance">Distance (near to far)</option>
-                <option value="top-reviewed">Top reviewed</option>
+                <option value="star-desc">Star rating (high→low)</option>
+                <option value="star-asc">Star rating (low→high)</option>
+                <option value="guest-desc">Guest rating (high→low)</option>
+                <option value="guest-asc">Guest rating (low→high)</option>
               </select>
             </div>
           </div>
