@@ -26,6 +26,7 @@ const Hero = () => {
     const [minCheckIn, setMinCheckIn] = useState('');
     const worker = useRef(null);
     const workerRequestId = useRef(0);
+    const [hasSubmitted, setHasSubmitted] = useState(false);
 
     // Load destinations from JSON into state once
     useEffect(() => {
@@ -43,11 +44,11 @@ const Hero = () => {
             type: "init",
             payload: destinations,
         });
-
+        
         // Handle results
         worker.current.onmessage = (e) => {
             setSuggestions(e.data.results);
-        }
+        };
 
         // Cleanup
         return () => worker.current.terminate();
@@ -82,17 +83,22 @@ const Hero = () => {
         setMinCheckIn(formatDate(minDate));
     }, []);
 
-    // form submission handler
+    // Form submission handler
     const handleSubmit = (e) => {
         e.preventDefault();
+        setHasSubmitted(true); // Track submission for showing inline errors
 
+        // Get trimmed and lowercase version of user input for matching
+        const trimmedInput = (searchTerm || "").toLowerCase().trim();
+
+        // Find destination from JSON file that matches user input *exactly*
         const matchedDestination = destinations.find(
-            (d) => d.term.toLowerCase() === searchTerm.toLowerCase()
+            (d) => typeof d.term === "string" && d.term.toLowerCase().trim() === trimmedInput
         );
 
         if (!matchedDestination) {
             alert('Please choose a destination from the list.');
-            return;
+            return;  // prevent navigate call below
         }
 
         // Validate check-in date is at least minCheckIn
@@ -100,13 +106,14 @@ const Hero = () => {
             alert(`Check-in date can't be before ${minCheckIn}`);
             return;
         }
+
         // Validate check-out date is same or after check-in date
         if (checkOut < checkIn) {
             alert('Check-out date cannot be before check-in date.');
             return;
         }
 
-        // Redirect with valid destination and browser-validated fields
+        // Only call navigate if matchedDestination is valid
         navigate(
             `/search-results?uid=${matchedDestination.uid}&checkin=${checkIn}&checkout=${checkOut}&guests=${guests}&rooms=${rooms}`
         );
@@ -141,6 +148,22 @@ const Hero = () => {
                         className='rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none w-full'
                         autoComplete='off'
                     />
+
+                    {/* Show error if user click search button but destination input empty */}
+                    {hasSubmitted && searchTerm.trim() === '' && (
+                        <p style={{ color: 'red', fontSize: '0.8rem' }}>
+                            Please choose a destination from the list.
+                        </p>
+                    )}
+
+                    {/* Show error when user submits destination input that is not from JSON data */}
+                    {hasSubmitted && searchTerm.trim() !== '' &&
+                        !destinations.find(d => typeof d.term === "string" &&
+                            d.term.toLowerCase().trim() === searchTerm.toLowerCase().trim()) && (
+                            <p style={{ color: 'red', fontSize: '0.8rem' }}>
+                                Please choose a destination from the list.
+                            </p>
+                        )}
 
                     {/* Suggested autocomplete list */}
                     {suggestions.length > 0 && (
