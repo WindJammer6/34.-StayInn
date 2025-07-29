@@ -1,13 +1,16 @@
 import Fuse from 'fuse.js';
 
+
 // Detect environment
 let postMessageFunc;
 let onMessageFunc;
+
 
 const isNode =
   typeof process !== 'undefined' &&
   process.versions != null &&
   process.versions.node != null;
+
 
 if (isNode) {
   // Node.js (Jest / worker_threads)
@@ -24,20 +27,26 @@ if (isNode) {
   };
 }
 
+
 let fuse = null;
+
 
 onMessageFunc((data) => {
   const { type, payload } = data;
 
+
   // instantiates Fuse
   if (type === 'init') {
     fuse = new Fuse(payload, {
-      keys: ['term'],
+      keys: ['term', 'lat','lng','state', 'type', 'uid'], // <-- added for multi-field search
       threshold: 0.3,
+      ignoreLocation: true,      // <-- enable substring matching anywhere in term
+      minMatchCharLength: 1,     // <-- allow matching short terms
       shouldSort: true,
     });
     return;
   }
+
 
   if (type === 'search' && fuse) {
     const results = fuse.search(payload.trim());
@@ -47,3 +56,4 @@ onMessageFunc((data) => {
     });
   }
 });
+
