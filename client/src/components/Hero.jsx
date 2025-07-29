@@ -27,25 +27,29 @@ const Hero = () => {
   const worker = useRef(null);
   const workerRequestId = useRef(0);
 
-  // Load destinations from JSON into state
+  // Load destinations from JSON into state once
   useEffect(() => {
     setDestinations(destinationsData);
   }, []);
 
+  // Set up Web Worker to handle fuzzy search autocomplete
   useEffect(() => {
-    // Set up Web Worker to handle fuzzy search autocomplete
-    worker.current = new Worker(new URL('../workers/autocompleteWorker.js', import.meta.url), {
+    worker.current = new Worker(new URL('../workers/autocompleteworker.js', import.meta.url), {
       type: 'module',
     });
+
     // Init the worker with data
     worker.current.postMessage({
       type: "init",
       payload: destinations,
     });
+    
     // Handle results
     worker.current.onmessage = (e) => {
       setSuggestions(e.data.results);
     }
+
+    // Cleanup
     return () => worker.current.terminate();
   }, [destinations]);
 
@@ -60,11 +64,6 @@ const Hero = () => {
       });
     }, 100);
     return () => clearTimeout(timeout);
-    // use fuse to assign searchTerm to results and map destination from dest.json file to fuse result r
-    // r stands for result - is a variable name used in the .map()
-    // const results = fuse.search(searchTerm);
-    // const items = results.map((r) => r.item);
-    // setSuggestions(items.slice(0, 8));
   }, [searchTerm]);
 
   // When user clicks a suggestion
@@ -140,6 +139,7 @@ const Hero = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder='Type a city or hotel'
             className='rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none w-full'
+            autoComplete='off'
           />
 
           {/* Suggested autocomplete list */}
@@ -232,7 +232,6 @@ const Hero = () => {
           <img src={assets.searchIcon} alt='searchIcon' className='h-5' />
           <span>Search</span>
         </button>
-
       </form>
     </div>
   );
