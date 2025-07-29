@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Fuse from 'fuse.js';
+//import Fuse from 'fuse.js';
 import { assets } from '../assets/assets';
 
 import destinationsData from '../assets/destinations.json'; // assuming the destinations file is in src/assets
