@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wifi, Car, Shield, Lock } from 'lucide-react';
 
 import HotelCard from '../components/BookingPage/HotelCard';
@@ -9,9 +9,20 @@ import BillingAddressForm from '../components/BookingPage/BillingAddressForm';
 
 import { formatCardNumber, validateForm } from '../components/BookingPage/utils';
 
+import { loadStripe } from '@stripe/stripe-js';
+import { 
+  Elements,
+  EmbeddedCheckoutProvider,
+  EmbeddedCheckout
+ } from '@stripe/react-stripe-js';
+import CheckoutForm from '../components/BookingPage/CheckoutForm';
+
+//checking stripe promise
+const stripePromise = loadStripe('pk_test_51RoRvpJxdrdbDB60c3djoXo8LwZXOtdd3NvmcHQrmO9XbjVPRUhXkyrARKnb8AdSUk31OVonwnIaiEAWTLQ7a8j200RbPmff4O')
+
 //feature 3 should pass data neccessary(props) when using bookingpage
 //if there is no data, hardcoded data is used currently
-//there are 3 props: props.hotel, props.booking and props. pricing
+//there are 3 props: props.hotel, props.booking and props.pricing
 
 const BookingPage = (props = {}) => {
   const hotel = props.hotel || {
@@ -59,6 +70,68 @@ const BookingPage = (props = {}) => {
   //This holds the loading state of the booking
   const [loading, setLoading] = useState(false);
 
+  //This is for stripe
+  const [clientSecret, setClientSecret] = useState('');
+
+  /*
+  useEffect(() => {
+  const createPaymentIntent = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pricing: { total: '$517.50' } })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json(); // Use response.json() directly
+      console.log("Payment intent created:", data);
+      setClientSecret(data.clientSecret);
+    } catch (error) {
+      console.error("Failed to create payment intent:", error);
+    }
+  };
+
+  createPaymentIntent();
+  }, []);*/
+
+  useEffect(() => {
+  const createPaymentIntent = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pricing: { total: '$517.50' } })
+      });
+
+      // First, log the raw response text
+      const rawResponse = await response.text();
+      console.log("Raw response:", rawResponse);
+
+      // Then try to parse it
+      try {
+        const data = JSON.parse(rawResponse);
+        console.log("Parsed data:", data);
+        setClientSecret(data.clientSecret);
+      } catch (parseError) {
+        console.error("Failed to parse JSON:", parseError);
+        console.error("Response content:", rawResponse);
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Failed to create payment intent:", error);
+    }
+  };
+
+  createPaymentIntent();
+}, []);
+
   //Update the state of the form when the updates are make
   const updateForm = (e) => {
     const { name, value } = e.target;
@@ -100,7 +173,7 @@ const BookingPage = (props = {}) => {
 
     //api call with endpoint: api/bookings
     try {
-      const response = await fetch('http://localhost:3000/api/bookings', {
+      const response = await fetch('http://localhost:8080/api/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ form, hotel, booking, pricing }),
@@ -121,7 +194,6 @@ const BookingPage = (props = {}) => {
       } finally {
       setLoading(false);
     }
-
   };
 
   return (
@@ -144,11 +216,12 @@ const BookingPage = (props = {}) => {
             />
 
             {/* Payment */}
-            <PaymentForm 
-              form={form}
-              errors={errors}
-              onChange={updateForm}
-            />
+            {clientSecret && (
+              <Elements stripe={stripePromise} options={{ clientSecret }}>
+                <CheckoutForm />
+              </Elements>
+            )}
+
 
             {/* Billing Address */}
             <BillingAddressForm 
@@ -160,7 +233,7 @@ const BookingPage = (props = {}) => {
             {/* Submit Button */}
             <div className="bg-white p-6 rounded shadow mt-6">
               <button
-                onClick={handleSubmit}
+                //onClick={handleSubmit}
                 disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded transition"
               >
