@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const axios = require("axios");
+<<<<<<< HEAD
 const stripe = require('stripe')('STRIPE_SECRET_KEY');
 
 const corsOptions = {
