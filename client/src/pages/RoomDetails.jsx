@@ -20,6 +20,11 @@ import {
   Wifi,
   Accessibility,
   Leaf,
+  Droplets,
+  CigaretteOff,
+  DoorOpen,
+  Link,
+  Cigarette,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +39,10 @@ import defaultHotelImg from "@/assets/hotelImage.png";
 // RoomCard Component
 // -----------------------------
 const RoomCard = ({ room }) => {
+  const marketRates = room.market_rates || [];
+  console.log("Market rates for room:", marketRates);
+  console.log("Surcharges for room:", room.surcharges);
+
   const [showModal, setShowModal] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showMore, setShowMore] = useState(false);
@@ -54,6 +63,11 @@ const RoomCard = ({ room }) => {
     roomAdditionalInfo = {},
     free_cancellation,
   } = room;
+
+  const [quantity, setQuantity] = useState(1);
+  const [totalCost, setTotalCost] = useState(
+    quantity * (price ?? converted_price ?? 0)
+  );
 
   const displayPrice = price ?? converted_price ?? "N/A";
   const { breakfastInfo, displayFields = {} } = roomAdditionalInfo;
@@ -76,9 +90,19 @@ const RoomCard = ({ room }) => {
     internet: Wifi,
     accessibility: Accessibility,
     eco: Leaf,
+    relax: Droplets,
+  };
+
+  const phraseIconMap = {
+    "non-smoking": CigaretteOff,
+    smoking: Cigarette,
+    "room is accessed via exterior corridors": DoorOpen,
+    "connecting/adjoining rooms can be requested, subject to availability":
+      Link,
   };
 
   const replaceNode = (domNode) => {
+    // Match bold headers
     if (
       (domNode.name === "strong" || domNode.name === "b") &&
       domNode.children
@@ -102,6 +126,23 @@ const RoomCard = ({ room }) => {
         </span>
       );
     }
+
+    // Match entire phrase in plain <p> tags (no bold)
+    if (domNode.name === "p" && domNode.children?.length === 1) {
+      const text = domNode.children[0].data?.toLowerCase().trim();
+      const Icon = phraseIconMap[text];
+      if (Icon) {
+        return (
+          <p className="flex items-center gap-1">
+            <Icon className="w-4 h-4 text-primary flex-shrink-0" />
+            {domNode.children[0].data}
+          </p>
+        );
+      }
+    }
+
+    // Default: return unmodified
+    return undefined;
   };
 
   return (
@@ -133,6 +174,11 @@ const RoomCard = ({ room }) => {
                               src={url}
                               alt={`Room image ${i + 1}`}
                               className="w-full h-48 object-cover"
+                              onError={(e) => {
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = defaultRoomImg;
+                                e.currentTarget.alt = "Default room image";
+                              }}
                             />
                           </div>
                         );
@@ -190,12 +236,21 @@ const RoomCard = ({ room }) => {
                 </div>
               )}
             </div>
+
             {/* Room Info */}
             <div className="flex-grow space-y-3">
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold">
-                  {roomDescription || "Room"}
-                </h3>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-xl font-semibold">
+                    {roomDescription || "Room"}
+                  </h3>
+                  {room.rooms_available > 0 && room.rooms_available < 3 && (
+                    <span className="text-sm text-red-600 font-semibold">
+                      Only {room.rooms_available} room
+                      {room.rooms_available > 1 ? "s" : ""} left!
+                    </span>
+                  )}
+                </div>
                 <span
                   className={`px-2 py-1 rounded text-xs font-medium ${
                     free_cancellation
@@ -206,9 +261,11 @@ const RoomCard = ({ room }) => {
                   {free_cancellation ? "Free Cancellation" : "Non-refundable"}
                 </span>
               </div>
+
               <div className="space-y-2 text-sm text-gray-700">
                 {parse(long_description || "", { replace: replaceNode })}
               </div>
+
               {amenities.length > 0 && (
                 <div>
                   <h4 className="font-semibold mb-1">Amenities:</h4>
@@ -224,7 +281,9 @@ const RoomCard = ({ room }) => {
                   </div>
                 </div>
               )}
-              <div className="flex justify-between items-center">
+
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-2 gap-4">
+                {/* Price section (left side) */}
                 <div>
                   <span className="text-2xl font-bold text-primary">
                     {currency}
@@ -233,12 +292,69 @@ const RoomCard = ({ room }) => {
                       : displayPrice}
                   </span>
                   <p className="text-xs text-gray-500">per night</p>
+
+                  {breakfastInfo && (
+                    <div className="text-xs text-gray-600 italic mt-1">
+                      Breakfast Info: {breakfastInfo.replace(/_/g, " ")}
+                    </div>
+                  )}
                 </div>
-                <Button onClick={() => alert("test")} size="lg">
-                  Reserve
-                </Button>
+
+                {/* Reserve & Quantity section on right */}
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 p-0"
+                      onClick={() => {
+                        const newQ = Math.max(1, quantity - 1);
+                        setQuantity(newQ);
+                        setTotalCost(newQ * (price ?? converted_price ?? 0));
+                      }}
+                      disabled={quantity <= 1}
+                    >
+                      –
+                    </Button>
+                    <span className="w-6 text-center">{quantity}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 p-0"
+                      onClick={() => {
+                        const max = room.rooms_available || Infinity;
+                        const newQ = Math.min(max, quantity + 1);
+                        setQuantity(newQ);
+                        setTotalCost(newQ * (price ?? converted_price ?? 0));
+                      }}
+                      disabled={
+                        room.rooms_available
+                          ? quantity >= room.rooms_available
+                          : false
+                      }
+                    >
+                      +
+                    </Button>
+
+                    <Button
+                      size="lg"
+                      onClick={() => {
+                        console.log("Reserving:", { quantity, totalCost });
+                      }}
+                    >
+                      Reserve
+                    </Button>
+                  </div>
+
+                  <p className="text-sm text-gray-500 italic">
+                    Total: {currency}
+                    {totalCost.toLocaleString()}
+                  </p>
+                </div>
               </div>
-              {surcharges.length > 0 && (
+
+              {/* Taxes & Fees */}
+              {Array.isArray(surcharges) && surcharges.length > 0 && (
                 <div className="text-xs text-gray-500">
                   <strong>Taxes & fees included:</strong>{" "}
                   {surcharges
@@ -252,9 +368,21 @@ const RoomCard = ({ room }) => {
                     .join(", ")}
                 </div>
               )}
-              {breakfastInfo && (
-                <div className="text-xs text-gray-600 italic mt-1">
-                  Breakfast Info: {breakfastInfo.replace(/_/g, " ")}
+
+              {/* Market Rates */}
+              {Array.isArray(marketRates) && marketRates.length > 0 && (
+                <div className="text-sm text-gray-500 mt-1">
+                  <strong>Market Rates:</strong>{" "}
+                  {marketRates.map((rate, idx) => (
+                    <span key={idx}>
+                      {rate.supplier}: {currency}
+                      {rate.rate.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                      {idx !== marketRates.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
                 </div>
               )}
             </div>
@@ -268,7 +396,6 @@ const RoomCard = ({ room }) => {
           onClick={() => setShowModal(false)}
           className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4"
         >
-          {/* ← Left button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -279,7 +406,6 @@ const RoomCard = ({ room }) => {
             <ChevronLeft />
           </button>
 
-          {/* The current image */}
           <img
             src={
               images[currentIndex].high_resolution_url ||
@@ -288,9 +414,13 @@ const RoomCard = ({ room }) => {
             alt={`Room image ${currentIndex + 1}`}
             className="max-h-[90vh] max-w-[90vw] object-contain rounded shadow-lg"
             onClick={(e) => e.stopPropagation()}
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = defaultRoomImg;
+              e.currentTarget.alt = "Default room image";
+            }}
           />
 
-          {/* → Right button */}
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -301,7 +431,6 @@ const RoomCard = ({ room }) => {
             <ChevronRight />
           </button>
 
-          {/* × Close */}
           <button
             onClick={() => setShowModal(false)}
             className="absolute top-4 right-4 text-white text-3xl font-bold"
@@ -614,27 +743,6 @@ const RoomDetails = () => {
             </div>
           </div>
         )}
-
-        {/* Hotel Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Hotel Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-2">Hotel ID: {hotelId}</p>
-            {hotelData.completed ? (
-              <div className="flex items-center gap-2">
-                <Check className="w-5 h-5 text-green-500" />
-                <span>Search Completed</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <X className="w-5 h-5 text-red-500" />
-                <span>Search In Progress</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Available Rooms */}
         <Card>
