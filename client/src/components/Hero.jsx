@@ -90,6 +90,7 @@ const Hero = () => {
     setMinCheckIn(formatDate(minDate));
   }, []);
 
+  // Compute room and guests logic
   const handleRoomChange = (delta) => {
     setRooms(prev => {
       let next = prev + delta;
@@ -108,7 +109,8 @@ const Hero = () => {
       return next;
     });
   };
-  // Form validation
+
+  // Form validation for all
   const isFormValid =
     searchTerm.trim() &&
     destinations.find(
@@ -340,6 +342,7 @@ const Hero = () => {
             >+</button>
           </div>
 
+          {/* Display total number of guests */}
           <div className="pt-1 text-xs text-gray-500 flex items-center gap-2">
             <span>
               Total guests: {totalGuests}
