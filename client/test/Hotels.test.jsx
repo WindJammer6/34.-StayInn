@@ -1,0 +1,91 @@
+import { act, render, screen, within, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import Hotels from "../src/pages/Hotels.jsx"
+import { vi } from 'vitest';
+
+vi.mock('axios');
+
+const mockHotelData = [
+    { id: 'h1', name: 'Hotel 1', address: 'Addr 1', rating: 1.1, description: 'Desc 1', "trustyou": {"score": {"overall": 1.1}} },
+    { id: 'h2', name: 'Hotel 2', address: 'Addr 2', rating: 2.2, description: 'Desc 2', "trustyou": {"score": {"overall": 2.2}} },
+]
+
+const mockPriceData = ({
+    hotels: [
+        { id: 'h1', lowest_price: 123 },
+        { id: 'h2', lowest_price: 456 }
+    ]
+})
+
+describe("Hotels UI test", () => {
+    beforeEach(() => {
+        // mock fetched hotel data
+        const fetchMock = vi.fn()
+        .mockResolvedValueOnce({
+            ok: true,
+            json: async () => mockHotelData
+        })
+        .mockResolvedValueOnce({
+            ok: true,
+            json: async () => mockPriceData
+        });
+        vi.stubGlobal('fetch', fetchMock);
+
+        act(() => {
+            // render page
+            render( 
+                <MemoryRouter>
+                    <Hotels />
+                </MemoryRouter>
+            );
+        });
+    })
+
+    // Display "Loading hotels" while waiting for API call to return
+    test("'Loading hotels' is rendered", () => {
+        expect(screen.queryByText(/Loading hotels/i)).toBeInTheDocument();
+    });
+
+    // Display hotel information on cards
+    test('Cards are rendered with all hotel information', async () => {
+        // Wait for the loading spinner to disappear
+        await waitFor(() => {
+            expect(screen.queryByText(/Loading hotels/i)).not.toBeInTheDocument();
+        }, { timeout: 20000 });
+        expect(screen.queryByText(/Loading hotels/i)).not.toBeInTheDocument();
+        const hotelCards = await screen.findAllByTestId("hotel-card");
+        for (let i = 0; i < hotelCards.length; i++){
+            const card = within(hotelCards[i]);
+            expect(card.getByText(RegExp(mockHotelData[i].name, "i"))).toBeInTheDocument();
+            expect(card.getByText(RegExp(mockHotelData[i].address, "i"))).toBeInTheDocument();
+            expect(card.getByText(RegExp(mockPriceData.hotels[i].lowest_price, "i"))).toBeInTheDocument();
+            expect(card.getByText(RegExp(mockHotelData[i].description, "i"))).toBeInTheDocument();
+            card.getAllByText(RegExp(`(${mockHotelData[i].rating})`), "i").forEach((el) => {
+                expect(el).toBeInTheDocument();
+            });
+            card.getAllByText(RegExp(`(${mockHotelData[i].trustyou.score.overall})`), "i").forEach((el) => {
+                expect(el).toBeInTheDocument();
+            });
+        }
+    }, { timeout: 20000 });
+
+
+    // Display fallback image
+    test('Fallback image is displayed for hotels without proper image url', async () => {
+        // Wait for the loading spinner to disappear
+        await waitFor(() => {
+            expect(screen.queryByText(/Loading hotels/i)).not.toBeInTheDocument();
+        }, { timeout: 20000 });
+        expect(screen.queryByText(/Loading hotels/i)).not.toBeInTheDocument();
+        const hotelCards = await screen.findAllByTestId("hotel-card");
+        for (let i = 0; i < hotelCards.length; i++){
+            const img = screen.getByAltText(RegExp(mockHotelData[i].name, "i"));
+            expect(img).toBeInTheDocument();
+            expect(img).toHaveAttribute("src", "https://dummyimage.com/300x200/cccccc/000000&text=No+Image");
+        }
+    }, { timeout: 20000 });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+})
