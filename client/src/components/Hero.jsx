@@ -53,11 +53,13 @@ const Hero = () => {
     });
 
     worker.current.onmessage = (e) => {
-      setSuggestions(e.data.results);
+      if (!selectedTerm){
+        setSuggestions(e.data.results);
+      }
     };
 
     return () => worker.current.terminate();
-  }, [destinations]);
+  }, [destinations, selectedTerm]);
 
   // Send search term to worker for autocomplete
   useEffect(() => {
@@ -218,6 +220,7 @@ const Hero = () => {
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setHasSubmitted(false);
+              setSelectedTerm('');
             }}
             placeholder='Type a city or hotel'
             className='rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none w-full'
