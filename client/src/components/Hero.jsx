@@ -155,13 +155,37 @@ const Hero = () => {
     }
 
     // to feature2 when all validation passed
-    navigate(
-      `/search-results?uid=${matchedDestination.uid}` +
-      `&checkin=${checkIn}` +
-      `&checkout=${checkOut}` +
-      `&rooms=${rooms}` +
-      `&guestsPerRoom=${guestsPerRoom}`
-    );
+    // navigate(
+    //   `/search-results?uid=${matchedDestination.uid}` +
+    //   `&checkin=${checkIn}` +
+    //   `&checkout=${checkOut}` +
+    //   `&rooms=${rooms}` +
+    //   `&guestsPerRoom=${guestsPerRoom}`
+    // );
+    navigate("/rooms", {
+      state: {
+        destinationId: matchedDestination.uid,
+        checkIn,
+        checkOut,
+        currency: "SGD",
+        countryCode: "SG",
+        guestsPerRoom: guestsPerRoom,
+        rooms,
+        lang: "en_US",
+        destLabel: matchedDestination.term,
+        // defaultValues: {
+        //   DEST: destinationId,
+        //   IN: checkIn,
+        //   OUT: checkOut,
+        //   CURR: currency,
+        //   CC: countryCode,
+        //   GUESTS: guestsPerRoom,
+        //   ROOMS: rooms,
+        //   LANG: lang,
+        //   DEST_LABEL: destLabel,
+        // },
+      },
+    });
   };
 
   // Show error below destination input if submitting and input empty or not in list

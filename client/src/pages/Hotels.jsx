@@ -1,5 +1,6 @@
 // src/pages/Hotels.jsx
 import React, { useEffect, useState, useMemo, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import parse, { domToReact } from "html-react-parser";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -8,15 +9,15 @@ import HotelList from "../components/HotelList";
 import destinations from "../assets/destinations.json";
 
 /* Hardcoded search params */
-const DEST = "RsBU";
-const IN = "2025-10-01";
-const OUT = "2025-10-07";
-const GUESTS = "2";
-const CURR = "SGD";
-const CC = "SG";
-const LANG = "en_US";
+// const DEST = "RsBU";
+// const IN = "2025-10-01";
+// const OUT = "2025-10-07";
+// const GUESTS = "2";
+// const CURR = "SGD";
+// const CC = "SG";
+// const LANG = "en_US";
 
-const DEST_LABEL = destinations.find((d) => d.uid === DEST)?.term || DEST;
+// const DEST_LABEL = destinations.find((d) => d.uid === DEST)?.term || DEST;
 
 const PRICE_RANGES = [
   { label: "$ 0 – $ 250", min: 0, max: 250 },
@@ -177,6 +178,43 @@ const hasPrice = (h) => {
 };
 
 export default function Hotels() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state || {};
+
+  const {
+    destinationId,
+    checkIn,
+    checkOut,
+    currency,
+    countryCode,
+    guestsPerRoom,
+    rooms,
+    lang,
+    destLabel
+  } = state;
+
+  // const effectiveParams = {
+  //     destinationId: destinationId || defaultValues.destinationId || "WD0M",
+  //     checkIn: checkIn || defaultValues.checkin || "2025-10-10",
+  //     checkOut: checkOut || defaultValues.checkout || "2025-10-17",
+  //     lang: lang || defaultValues.lang || "en_US",
+  //     currency: currency || defaultValues.currency || "SGD",
+  //     countryCode: countryCode || defaultValues.countryCode || "SG",
+  //     rooms: rooms || defaultValues.rooms || "1",
+  //     guestsPerRoom: guestsPerRoom || defaultValues.guestsPerRoom || "2",
+  //     destLabel: destLabel || defaultValues.destLabel || "Singapore, Singapore"
+  //   };
+
+  const DEST = destinationId || "WD0M"
+  const IN = checkIn || "2025-10-10"
+  const OUT = checkOut || "2025-10-17"
+  const GUESTS = guestsPerRoom || "2"
+  const CURR = currency || "SGD"
+  const CC = countryCode || "SG"
+  const LANG = lang || "en_US"
+  const DEST_LABEL = destLabel || "Singapore, Singapore"
+
   const [hotels, setHotels] = useState([]);
   const [sortKey, setSortKey] = useState("lowest-price");
   const [loading, setLoading] = useState(true);
@@ -218,6 +256,9 @@ export default function Hotels() {
         if (!pricesResponse.ok) throw new Error("Failed to fetch hotel prices");
 
         const pricesData = await pricesResponse.json();
+
+        console.log(detailsData)
+        console.log(pricesData)
 
         // Create a map of prices by hotel ID for quick lookup
         const pricesMap = {};
