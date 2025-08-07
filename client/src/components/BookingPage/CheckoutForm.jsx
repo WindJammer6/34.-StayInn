@@ -1,78 +1,69 @@
-import React, { useCallback, useState, useEffect } from "react";
-import {loadStripe} from '@stripe/stripe-js';
-import {
-  EmbeddedCheckoutProvider,
-  EmbeddedCheckout
-} from '@stripe/react-stripe-js';
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate
-} from "react-router-dom";
+import React, { useState } from "react";
+import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
+import FormSection from './FormSection';
+import { CheckCircle2 } from 'lucide-react';
 
-const stripePromise = loadStripe("pk_test_51RoRvpJxdrdbDB60c3djoXo8LwZXOtdd3NvmcHQrmO9XbjVPRUhXkyrARKnb8AdSUk31OVonwnIaiEAWTLQ7a8j200RbPmff4O");
+// Separate component for the payment form that uses Stripe hooks
+const CheckoutForm = React.forwardRef((props, ref) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [message, setMessage] = useState('');
 
-const CheckoutForm = () => {
-  const fetchClientSecret = useCallback(() => {
-    // Create a Checkout Session
-    return fetch("/create-checkout-session", {
-      method: "POST",
-    })
-      .then((res) => res.json())
-      .then((data) => data.clientSecret);
-  }, []);
+  // Expose the submit function to parent component
+  React.useImperativeHandle(ref, () => ({
+    submitPayment: async () => {
+      if (!stripe || !elements) {
+        return { success: false, error: 'Stripe not loaded' };
+      }
 
-  const options = {fetchClientSecret};
+      setMessage('Processing payment...');
+
+      try {
+        const { error, paymentIntent } = await stripe.confirmPayment({
+          elements,
+          confirmParams: {
+            return_url: `${window.location.origin}/completion`,
+          },
+          redirect: 'if_required'
+        });
+
+        if (error) {
+          setMessage(error.message);
+          return { success: false, error: error.message };
+        } else if (paymentIntent && paymentIntent.status === "succeeded") {
+          setMessage("Payment successful!");
+          return { success: true, paymentIntent };
+        }
+      } catch (err) {
+        const errorMessage = err.message || 'Payment failed';
+        setMessage(errorMessage);
+        return { success: false, error: errorMessage };
+      }
+    }
+  }), [stripe, elements]);
 
   return (
-    <div id="checkout">
-      <EmbeddedCheckoutProvider
-        stripe={stripePromise}
-        options={options}
-      >
-        <EmbeddedCheckout />
-      </EmbeddedCheckoutProvider>
-    </div>
-  )
-}
+    <FormSection
+      title="Payment Details" 
+      subtitle="Enter your payment details to complete your booking"
+      icon={<CheckCircle2 className="h-5 w-5" />}
+    >
+      <PaymentElement />
+      {message && (
+        <div className="mt-4 p-3 rounded text-sm">
+          {message.includes("successful") ? (
+            <div className="text-green-700 bg-green-100 p-3 rounded">
+              {message}
+            </div>
+          ) : (
+            <div className="text-red-700 bg-red-100 p-3 rounded">
+              {message}
+            </div>
+          )}
+        </div>
+      )}
+    </FormSection>
+  );
+});
 
-const Return = () => {
-  const [status, setStatus] = useState(null);
-  const [customerEmail, setCustomerEmail] = useState('');
-
-  useEffect(() => {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const sessionId = urlParams.get('session_id');
-
-    fetch(`/session-status?session_id=${sessionId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setStatus(data.status);
-        setCustomerEmail(data.customer_email);
-      });
-  }, []);
-
-  if (status === 'open') {
-    return (
-      <Navigate to="/checkout" />
-    )
-  }
-
-  if (status === 'complete') {
-    return (
-      <section id="success">
-        <p>
-          We appreciate your business! A confirmation email will be sent to {customerEmail}.
-
-          If you have any questions, please email <a href="mailto:orders@example.com">orders@example.com</a>.
-        </p>
-      </section>
-    )
-  }
-
-  return null;
-}
-
-export default Return
+export default CheckoutForm;

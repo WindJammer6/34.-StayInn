@@ -4,18 +4,14 @@ import { Wifi, Car, Shield, Lock } from 'lucide-react';
 import HotelCard from '../components/BookingPage/HotelCard';
 import BookingDetails from '../components/BookingPage/BookingDetails';
 import GuestDetailsForm from '../components/BookingPage/GuestDetailsForm';
-import PaymentForm from '../components/BookingPage/PaymentForm';
 import BillingAddressForm from '../components/BookingPage/BillingAddressForm';
+import CheckoutForm from '../components/BookingPage/CheckoutForm';
 
-import { formatCardNumber, validateForm } from '../components/BookingPage/utils';
+import { validateForm } from '../components/BookingPage/utils';
 
 import { loadStripe } from '@stripe/stripe-js';
-import { 
-  Elements,
-  EmbeddedCheckoutProvider,
-  EmbeddedCheckout
- } from '@stripe/react-stripe-js';
-import CheckoutForm from '../components/BookingPage/CheckoutForm';
+import { Elements } from '@stripe/react-stripe-js';
+
 
 //checking stripe promise
 const stripePromise = loadStripe('pk_test_51RoRvpJxdrdbDB60c3djoXo8LwZXOtdd3NvmcHQrmO9XbjVPRUhXkyrARKnb8AdSUk31OVonwnIaiEAWTLQ7a8j200RbPmff4O')
@@ -59,9 +55,8 @@ const BookingPage = (props = {}) => {
   //This holds booking details of the user
   const [form, setForm] = useState({
     firstName: '', lastName: '', phoneNumber: '', emailAddress: '', salutation: '', specialRequests: '',
-    nameOnCard: '', creditCardNumber: '', expirationMonth: '', expirationYear: '', cvv: '',
     billingFirstName: '', billingLastName: '', billingPhoneNumber: '', billingEmailAddress: '',
-    country: 'SG', stateProvince: '', postalCode: ''
+    country: 'SG', stateProvince: '', postalCode: '', date: ''
   });
 
   //This holds validation errors for the form completion
@@ -72,75 +67,53 @@ const BookingPage = (props = {}) => {
 
   //This is for stripe
   const [clientSecret, setClientSecret] = useState('');
-
-  /*
-  useEffect(() => {
-  const createPaymentIntent = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/api/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pricing: { total: '$517.50' } })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json(); // Use response.json() directly
-      console.log("Payment intent created:", data);
-      setClientSecret(data.clientSecret);
-    } catch (error) {
-      console.error("Failed to create payment intent:", error);
-    }
-  };
-
-  createPaymentIntent();
-  }, []);*/
+  const paymentFormRef = React.useRef(null);
+  const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
 
   useEffect(() => {
-  const createPaymentIntent = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/api/create-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pricing: { total: '$517.50' } })
-      });
-
-      // First, log the raw response text
-      const rawResponse = await response.text();
-      console.log("Raw response:", rawResponse);
-
-      // Then try to parse it
+    const createPaymentIntent = async () => {
       try {
-        const data = JSON.parse(rawResponse);
-        console.log("Parsed data:", data);
+        // Add a delay to prevent rapid successive calls
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        const response = await fetch('http://localhost:8080/api/create-payment-intent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pricing: { total: '$517.50' } })
+        });
+
+        if (!response.ok) {
+          // Handle rate limiting
+          if (response.status === 429) {
+            console.warn("Rate limited by Stripe, retrying after delay...");
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+            return createPaymentIntent(); // Retry
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Payment intent data:", data);
         setClientSecret(data.clientSecret);
-      } catch (parseError) {
-        console.error("Failed to parse JSON:", parseError);
-        console.error("Response content:", rawResponse);
+      } catch (error) {
+        console.error("Failed to create payment intent:", error);
+        if (error.message.includes('429')) {
+          alert("Service is temporarily busy. Please wait a moment and try again.");
+        }
       }
+    };
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    } catch (error) {
-      console.error("Failed to create payment intent:", error);
+    // Only create payment intent if we don't already have one
+    if (!clientSecret && !paymentIntentCreated) {
+      setPaymentIntentCreated(true);
+      createPaymentIntent();
     }
-  };
-
-  createPaymentIntent();
-}, []);
+  }, []);
 
   //Update the state of the form when the updates are make
   const updateForm = (e) => {
     const { name, value } = e.target;
     let processedValue = value;
-
-    //change the input into the creditcard number format
-    if (name === 'creditCardNumber') {
-      processedValue = formatCardNumber(value);
-    }
 
     setForm(prev => ({ ...prev, [name]: processedValue }));
 
@@ -151,53 +124,61 @@ const BookingPage = (props = {}) => {
   };
 
   //If there is no error from validateForm, it will make an API call 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validate form first
     const validationErrors = validateForm(form);
     setErrors(validationErrors);
+    console.log("errors", validationErrors)
 
-    if (Object.keys(validationErrors).length > 0) return;
+    if (Object.keys(validationErrors).length > 0) {
+      alert("Please fill in all required fields correctly.");
+      return;
+    }
 
     setLoading(true);
 
-    /*try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Booking submitted:', { form, hotel, booking, pricing });
-      props.onSubmit?.(form);
-      alert("Booking submitted successfully!");
-    } catch (error) {
-      console.error('Booking failed:', error);
-      alert("Booking failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }*/
-
-    //api call with endpoint: api/bookings
     try {
+      // Process payment first
+      if (paymentFormRef.current && paymentFormRef.current.submitPayment) {
+        const paymentResult = await paymentFormRef.current.submitPayment();
+        
+        if (!paymentResult.success) {
+          throw new Error(paymentResult.error || 'Payment failed');
+        }
+        
+        console.log('Payment successful:', paymentResult.paymentIntent);
+      } else {
+        throw new Error('Payment form not ready');
+      }
+
+      // If payment successful, proceed with booking API call
       const response = await fetch('http://localhost:8080/api/bookings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ form, hotel, booking, pricing }),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error('Booking submission failed');
       }
 
       const data = await response.json();
       console.log('Booking submitted:', data);
-      alert("Booking submitted successfully!");
+      alert("Booking completed successfully!");
       props.onSubmit?.(form);
 
-      } catch (error) {
-      console.error('Booking failed:', error);
-      alert("Booking failed. Please try again.");
-      } finally {
+    } catch (error) {
+      console.error('Booking process failed:', error);
+      alert(`Booking failed: ${error.message}`);
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className=" pt-25 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+    <div className="pt-25 min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -215,14 +196,6 @@ const BookingPage = (props = {}) => {
               onChange={updateForm}
             />
 
-            {/* Payment */}
-            {clientSecret && (
-              <Elements stripe={stripePromise} options={{ clientSecret }}>
-                <CheckoutForm />
-              </Elements>
-            )}
-
-
             {/* Billing Address */}
             <BillingAddressForm 
               form={form}
@@ -230,19 +203,29 @@ const BookingPage = (props = {}) => {
               onChange={updateForm}
             />
 
+            {/* Payment */}
+            {clientSecret && (
+              <Elements stripe={stripePromise} options={{ clientSecret }}>
+                <CheckoutForm ref={paymentFormRef} />
+              </Elements>
+            )}
+
             {/* Submit Button */}
             <div className="bg-white p-6 rounded shadow mt-6">
               <button
-                //onClick={handleSubmit}
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded transition"
+                onClick={handleSubmit}
+                disabled={loading || !clientSecret}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded transition disabled:cursor-not-allowed"
               >
-                {loading ? "Submitting..." : "Confirm Booking"}
+                {loading ? "Processing Payment & Booking..." : "Complete Booking & Pay"}
               </button>
+              <p className="text-sm text-gray-500 mt-2 text-center">
+                Your payment will be processed when you click this button
+              </p>
             </div>
           </div>
 
-          {/* Right Side - Booking Summary (optional) */}
+          {/* Right Side - Booking Summary */}
           <div>
             <HotelCard hotel={hotel} />
             <BookingDetails booking={booking} pricing={pricing} />

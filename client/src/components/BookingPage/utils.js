@@ -16,7 +16,7 @@ export const validateForm = (form) => {
   const newErrors = {};
   
   //Required fields
-  const requiredFields = ['firstName', 'lastName', 'phoneNumber', 'emailAddress', 'nameOnCard', 'creditCardNumber', 'expirationMonth', 'expirationYear', 'cvv'];
+  const requiredFields = ['firstName', 'lastName', 'phoneNumber', 'emailAddress'];
   requiredFields.forEach(field => {
     if (!form[field]?.trim()) {
       newErrors[field] = 'This field is required';
@@ -31,23 +31,6 @@ export const validateForm = (form) => {
   //Phone validation
   if (form.phoneNumber && !validatePhone(form.phoneNumber)) {
     newErrors.phoneNumber = 'Please enter a valid phone number';
-  }
-  
-  //Credit card validation
-  if (form.creditCardNumber) {
-    const cardNumber = form.creditCardNumber.replace(/\s/g, '');
-    if (cardNumber.length < 13 || cardNumber.length > 19) {
-      newErrors.creditCardNumber = 'Please enter a valid card number';
-    }
-  }
-  
-  //CVV validation: numeric only and length 3 or 4
-  if (form.cvv) {
-    if (!/^\d+$/.test(form.cvv)) {
-      newErrors.cvv = 'CVV must contain only numbers';
-    } else if (form.cvv.length < 3 || form.cvv.length > 4) {
-      newErrors.cvv = 'Please enter a valid CVV (3 or 4 digits)';
-    }
   }
  
   return newErrors;
