@@ -6,6 +6,7 @@ import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
 import HotelList from "../components/HotelList";
+import Hero from "../components/Hero";
 import destinations from "../assets/destinations.json";
 
 /* Hardcoded search params */
@@ -31,61 +32,6 @@ const PRICE_RANGES = [
 const GUEST_THRESHOLDS = [9, 8, 7, 6];
 
 const PAGE_SIZE = 20;
-
-/* Search Destination Header Component */
-const SearchHeader = () => (
-  <Card>
-    <CardContent className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-end">
-      <DestinationField />
-      <DateRangeFields />
-      <GuestField />
-      <Button className="self-end lg:self-auto whitespace-nowrap h-10 lg:h-auto">
-        Search Again
-      </Button>
-    </CardContent>
-  </Card>
-);
-
-/* Helper components */
-const DestinationField = () => (
-  <div className="flex-1">
-    <label className="block text-sm font-medium mb-1">Destination</label>
-    <input
-      type="text"
-      defaultValue="Singapore"
-      className="w-full border rounded-md px-3 py-2"
-    />
-  </div>
-);
-
-const DateRangeFields = () => (
-  <div className="flex gap-4 flex-1">
-    <DateField label="Check-in" defaultValue="01 Oct 2025" />
-    <DateField label="Check-out" defaultValue="07 Oct 2025" />
-  </div>
-);
-
-const GuestField = () => (
-  <div className="flex-1">
-    <label className="block text-sm font-medium mb-1">Guests</label>
-    <input
-      type="text"
-      defaultValue="1 Room | 2 Adults"
-      className="w-full border rounded-md px-3 py-2"
-    />
-  </div>
-);
-
-const DateField = ({ label, defaultValue }) => (
-  <div className="flex-1">
-    <label className="block text-sm font-medium mb-1">{label}</label>
-    <input
-      type="text"
-      defaultValue={defaultValue}
-      className="w-full border rounded-md px-3 py-2"
-    />
-  </div>
-);
 
 const toggleArrayItem = (arr, value) =>
   arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
@@ -167,14 +113,25 @@ const Filters = ({ draft, onChangeDraft, onApply }) => {
 
 /** keep only hotels that have at least one valid cash price */
 const hasPrice = (h) => {
-  return (
-    h.lowest_price ??
+  const price = h.lowest_price ??
     h.price ??
     h.lowest_converted_price ??
     h.converted_price ??
     h.max_cash_payment ??
-    h.coverted_max_cash_payment
-  ) != null;
+    h.coverted_max_cash_payment;
+  
+  console.log(`Hotel ${h.name} (${h.id}) price check:`, {
+    lowest_price: h.lowest_price,
+    price: h.price,
+    lowest_converted_price: h.lowest_converted_price,
+    converted_price: h.converted_price,
+    max_cash_payment: h.max_cash_payment,
+    coverted_max_cash_payment: h.coverted_max_cash_payment,
+    finalPrice: price,
+    hasPrice: price != null
+  });
+  
+  return price != null;
 };
 
 export default function Hotels() {
@@ -215,6 +172,10 @@ export default function Hotels() {
   const LANG = lang || "en_US"
   const DEST_LABEL = destLabel || "Singapore, Singapore"
 
+  // Add debugging
+  console.log("Hotels component rendered with state:", state);
+  console.log("Search params:", { DEST, IN, OUT, GUESTS, CURR, CC, LANG, DEST_LABEL });
+
   const [hotels, setHotels] = useState([]);
   const [sortKey, setSortKey] = useState("lowest-price");
   const [loading, setLoading] = useState(true);
@@ -235,6 +196,12 @@ export default function Hotels() {
     const fetchHotels = async () => {
       try {
         setLoading(true);
+        setError(null); // Reset error state
+        setVisibleCount(PAGE_SIZE); // Reset pagination
+        setFilters(INIT_FILTERS); // Reset filters
+        setPending(INIT_FILTERS); // Reset pending filters
+
+        console.log("Fetching hotels with params:", { DEST, IN, OUT, LANG, CURR, CC, GUESTS });
 
         // First fetch hotel details
         const detailsResponse = await fetch(
@@ -257,8 +224,10 @@ export default function Hotels() {
 
         const pricesData = await pricesResponse.json();
 
-        console.log(detailsData)
-        console.log(pricesData)
+        console.log("Hotel details response:", detailsData);
+        console.log("Prices response:", pricesData);
+        console.log("First hotel from details:", detailsData[0]);
+        console.log("Prices data hotels array:", pricesData.hotels);
 
         // Create a map of prices by hotel ID for quick lookup
         const pricesMap = {};
@@ -282,9 +251,10 @@ export default function Hotels() {
           };
         });
 
+        console.log("Combined hotels:", combinedHotels);
         setHotels(combinedHotels);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching hotels:", err);
         setError("Failed to load hotels.");
       } finally {
         setLoading(false);
@@ -292,12 +262,16 @@ export default function Hotels() {
     };
 
     fetchHotels();
-  }, []);
+  }, [DEST, IN, OUT, LANG, CURR, CC, GUESTS]);
 
   const sortedHotels = useMemo(() => {
-    let filtered = hotels
-      .filter(hasPrice)
-      .filter((h) => {
+    console.log("Starting to filter hotels. Total hotels:", hotels.length);
+    
+    let hotelsWithPrice = hotels.filter(hasPrice);
+    console.log("Hotels with price after filtering:", hotelsWithPrice.length);
+    console.log("First hotel with price:", hotelsWithPrice[0]);
+    
+    let filtered = hotelsWithPrice.filter((h) => {
       // Price range filter
       if (filters.priceRanges.length) {
         const inRange = filters.priceRanges.some((label) => {
@@ -429,7 +403,15 @@ export default function Hotels() {
 
   return (
     <div className="container mx-auto px-4 pt-28 pb-12">
-      <SearchHeader />
+      <Hero
+        isCompact={true}
+        initialDestination={DEST_LABEL}
+        initialDestinationId={DEST}
+        initialCheckIn={IN}
+        initialCheckOut={OUT}
+        initialRooms={parseInt(rooms) || 1}
+        initialGuestsPerRoom={parseInt(GUESTS) || 2}
+      />
 
       <div className="mt-6 flex flex-col lg:flex-row gap-6">
         <aside className="lg:w-72 w-full">

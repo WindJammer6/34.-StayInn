@@ -15,24 +15,34 @@ function formatDate(date) {
   return date.toISOString().slice(0, 10);
 }
 
-const Hero = () => {
+const Hero = ({ 
+  // Props for reusing this component in different contexts
+  isCompact = false, // For use in Hotels page vs Home page
+  initialDestination = '',
+  initialDestinationId = '',
+  initialCheckIn = '',
+  initialCheckOut = '',
+  initialRooms = 1,
+  initialGuestsPerRoom = 2,
+  className = '' // Custom styling
+}) => {
   const navigate = useNavigate();
 
   // State for destinations and user inputs
   const [destinations, setDestinations] = useState([]); // only valid destinations
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialDestination);
   const [suggestions, setSuggestions] = useState([]);
-  const [selectedTerm, setSelectedTerm] = useState('');
-  const [selectedUID, setSelectedUID] = useState('');
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState(initialDestination);
+  const [selectedUID, setSelectedUID] = useState(initialDestinationId);
+  const [checkIn, setCheckIn] = useState(initialCheckIn);
+  const [checkOut, setCheckOut] = useState(initialCheckOut);
   const [minCheckIn, setMinCheckIn] = useState('');
   const worker = useRef(null);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
   // For room and guest quantity
-  const [rooms, setRooms] = useState(1);
-  const [guestsPerRoom, setGuestsPerRoom] = useState(2); // default to 2 guests
+  const [rooms, setRooms] = useState(initialRooms);
+  const [guestsPerRoom, setGuestsPerRoom] = useState(initialGuestsPerRoom); // default to 2 guests
   const totalGuests = rooms * guestsPerRoom;
 
   // On mount, filter out any destinations without a valid `term` (defensive)
@@ -218,18 +228,30 @@ const Hero = () => {
 
 
   return (
-    <div className='flex flex-col items-start justify-center px-6 md:px-16 lg:px-24 xl:px-32 text-white bg-[url("/src/assets/heroImage.png")] bg-no-repeat bg-cover bg-center h-screen'>
+    <div className={`${
+      isCompact 
+        ? 'bg-white rounded-lg border shadow-sm p-6' 
+        : 'flex flex-col items-start justify-center px-6 md:px-16 lg:px-24 xl:px-32 text-white bg-[url("/src/assets/heroImage.png")] bg-no-repeat bg-cover bg-center h-screen'
+    } ${className}`}>
 
-      {/* Title */}
-      <h1 className='font-playfair text-2xl md:text-5xl font-bold max-w-xl mt-4'>
-        Chase elegance. Reserve your dream stay now.
-      </h1>
-      <p className='max-w-130 mt-4 text-sm md:text-base'>
-        Discover the finest hotels from all over the world
-      </p>
+      {/* Title - only show on full Hero */}
+      {!isCompact && (
+        <>
+          <h1 className='font-playfair text-2xl md:text-5xl font-bold max-w-xl mt-4'>
+            Chase elegance. Reserve your dream stay now.
+          </h1>
+          <p className='max-w-130 mt-4 text-sm md:text-base'>
+            Discover the finest hotels from all over the world
+          </p>
+        </>
+      )}
 
       {/* Search Form */}
-      <form onSubmit={handleSubmit} className='bg-white text-gray-600 rounded-lg px-6 py-4 mt-9 flex flex-col md:flex-row gap-4'>
+      <form onSubmit={handleSubmit} className={`${
+        isCompact 
+          ? 'text-gray-600 flex flex-col lg:flex-row gap-4 w-full' 
+          : 'bg-white text-gray-600 rounded-lg px-6 py-4 mt-9 flex flex-col md:flex-row gap-4'
+      }`}>
 
         {/* 🔍 Destination Input */}
         <div className='relative w-full md:w-[200px]'>
@@ -392,7 +414,7 @@ const Hero = () => {
           }`}
         >
           <img src={assets.searchIcon} alt='searchIcon' className='h-5' />
-          <span>Search</span>
+          <span>{isCompact ? 'Search Again' : 'Search'}</span>
         </button>
       </form>
     </div>

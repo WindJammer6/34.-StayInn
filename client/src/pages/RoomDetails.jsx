@@ -542,7 +542,9 @@ const RoomDetails = () => {
     }
   }, [hotelId, destinationId, checkin, checkout]);
 
-  const guestCounts = effectiveParams.guests.split("|").map(Number);
+  const guestCounts = typeof effectiveParams.guests === 'string' 
+    ? effectiveParams.guests.split("|").map(Number)
+    : [Number(effectiveParams.guests)]; // Handle single number format
   const totalGuests = guestCounts.reduce((a, b) => a + b, 0);
   const roomCount = guestCounts.length;
 

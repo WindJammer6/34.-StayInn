@@ -26,9 +26,7 @@ const BookIcon = () => (
 const Navbar = () => {
   const navLinks = [
     { name: "Home", path: "/" },
-    { name: "Hotels", path: "/rooms" },
     { name: "Bookings", path: "/" },
-    { name: "Membership", path: "/" },
   ];
 
   const [isScrolled, setIsScrolled] = React.useState(false);
@@ -82,23 +80,10 @@ const Navbar = () => {
             />
           </Link>
         ))}
-        <button
-          className={`border px-4 py-1 text-sm font-light rounded-full cursor-pointer ${
-            isScrolled ? "text-black" : "text-white"
-          } transition-all`}
-        >
-          Services {/* used to be dashboard */}
-        </button>
       </div>
 
       {/* Desktop Right */}
       <div className="hidden md:flex items-center gap-4">
-        <img
-          src={assets.searchIcon}
-          alt="search"
-          className={`${isScrolled} && 'invert'} h-7 transition-all duration-500 `}
-        />
-
         {user ? (
           <UserButton>
             <UserButton.MenuItems>
@@ -149,10 +134,6 @@ const Navbar = () => {
             {link.name}
           </Link>
         ))}
-
-        <button className="border px-4 py-1 text-sm font-light rounded-full cursor-pointer transition-all">
-          Services
-        </button>
 
         <button
           onClick={openSignIn}
