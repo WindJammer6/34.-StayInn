@@ -120,16 +120,16 @@ const hasPrice = (h) => {
     h.max_cash_payment ??
     h.coverted_max_cash_payment;
   
-  console.log(`Hotel ${h.name} (${h.id}) price check:`, {
-    lowest_price: h.lowest_price,
-    price: h.price,
-    lowest_converted_price: h.lowest_converted_price,
-    converted_price: h.converted_price,
-    max_cash_payment: h.max_cash_payment,
-    coverted_max_cash_payment: h.coverted_max_cash_payment,
-    finalPrice: price,
-    hasPrice: price != null
-  });
+  // console.log(`Hotel ${h.name} (${h.id}) price check:`, {
+  //   lowest_price: h.lowest_price,
+  //   price: h.price,
+  //   lowest_converted_price: h.lowest_converted_price,
+  //   converted_price: h.converted_price,
+  //   max_cash_payment: h.max_cash_payment,
+  //   coverted_max_cash_payment: h.coverted_max_cash_payment,
+  //   finalPrice: price,
+  //   hasPrice: price != null
+  // });
   
   return price != null;
 };
@@ -166,20 +166,22 @@ export default function Hotels() {
   const DEST = destinationId || "WD0M"
   const IN = checkIn || "2025-10-10"
   const OUT = checkOut || "2025-10-17"
-  const GUESTS = guestsPerRoom || "2"
+  const GUESTS = Array(Number(rooms) || "1").fill(guestsPerRoom || "2").join("|")
   const CURR = currency || "SGD"
   const CC = countryCode || "SG"
   const LANG = lang || "en_US"
   const DEST_LABEL = destLabel || "Singapore, Singapore"
 
   // Add debugging
-  console.log("Hotels component rendered with state:", state);
-  console.log("Search params:", { DEST, IN, OUT, GUESTS, CURR, CC, LANG, DEST_LABEL });
+  // console.log("Hotels component rendered with state:", state);
+  // console.log("Search params:", { DEST, IN, OUT, GUESTS, CURR, CC, LANG, DEST_LABEL });
 
   const [hotels, setHotels] = useState([]);
   const [sortKey, setSortKey] = useState("lowest-price");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [problemlah, setProblemLah] = useState(false);
+  const [retry, setRetry] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef(null);
 
@@ -201,7 +203,7 @@ export default function Hotels() {
         setFilters(INIT_FILTERS); // Reset filters
         setPending(INIT_FILTERS); // Reset pending filters
 
-        console.log("Fetching hotels with params:", { DEST, IN, OUT, LANG, CURR, CC, GUESTS });
+        // console.log("Fetching hotels with params:", { DEST, IN, OUT, LANG, CURR, CC, GUESTS });
 
         // First fetch hotel details
         const detailsResponse = await fetch(
@@ -226,8 +228,15 @@ export default function Hotels() {
 
         console.log("Hotel details response:", detailsData);
         console.log("Prices response:", pricesData);
-        console.log("First hotel from details:", detailsData[0]);
-        console.log("Prices data hotels array:", pricesData.hotels);
+        // console.log("First hotel from details:", detailsData[0]);
+        // console.log("Prices data hotels array:", pricesData.hotels);
+
+        // Check whether Ascenda API problem lah
+        if (!pricesData.completed){
+          setProblemLah(true);
+        } else {
+          setProblemLah(false);
+        }
 
         // Create a map of prices by hotel ID for quick lookup
         const pricesMap = {};
@@ -251,7 +260,7 @@ export default function Hotels() {
           };
         });
 
-        console.log("Combined hotels:", combinedHotels);
+        // console.log("Combined hotels:", combinedHotels);
         setHotels(combinedHotels);
       } catch (err) {
         console.error("Error fetching hotels:", err);
@@ -262,14 +271,14 @@ export default function Hotels() {
     };
 
     fetchHotels();
-  }, [DEST, IN, OUT, LANG, CURR, CC, GUESTS]);
+  }, [DEST, IN, OUT, LANG, CURR, CC, GUESTS, retry]);
 
   const sortedHotels = useMemo(() => {
-    console.log("Starting to filter hotels. Total hotels:", hotels.length);
+    // console.log("Starting to filter hotels. Total hotels:", hotels.length);
     
     let hotelsWithPrice = hotels.filter(hasPrice);
-    console.log("Hotels with price after filtering:", hotelsWithPrice.length);
-    console.log("First hotel with price:", hotelsWithPrice[0]);
+    // console.log("Hotels with price after filtering:", hotelsWithPrice.length);
+    // console.log("First hotel with price:", hotelsWithPrice[0]);
     
     let filtered = hotelsWithPrice.filter((h) => {
       // Price range filter
@@ -399,6 +408,23 @@ export default function Hotels() {
         </div>
       </div>
     );
+  if (error) return <p className="text-center pt-40 text-red-500">{error}</p>;
+
+  if (problemlah)
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-muted-foreground">Ascenda API problem lah ...</p>
+        <Button
+          onClick={() => setRetry(prev => !prev)}
+          className="mt-2 bg-blue-950"
+        >
+          Retry...
+        </Button>
+      </div>
+    </div>
+  );
+
   if (error) return <p className="text-center pt-40 text-red-500">{error}</p>;
 
   return (
