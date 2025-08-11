@@ -1,16 +1,13 @@
+require('dotenv').config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
 const axios = require("axios");
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const db = require('./db/conn.js').db;
 
 const corsOptions = {
-  origin: ["http://localhost:5173"],
-  credentials: true, // for clerk token later
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: [  // for clerk token
-    'Content-Type',
-    'Authorisation'
-  ]
+  origin: [process.env.CLIENT_URL],
 };
 
 app.use(cors(corsOptions));
@@ -132,6 +129,48 @@ app.get("/api/hotels/prices", async (req, res) => {
   }
 });
 
-app.listen(8080, () => {
-  console.log("Server started on port 8080");
+//for stripe
+app.post('/api/create-payment-intent', async (req, res) => {
+  try {
+    const { pricing } = req.body;
+    
+    if (!pricing || !pricing.total) {
+      return res.status(400).json({ error: 'Pricing information is required' });
+    }
+    
+    console.log("Pricing received:", pricing);
+    const amount = Math.round(parseFloat(pricing.total.replace('$', '')) * 100);
+    
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'sgd',
+      automatic_payment_methods: { enabled: true }
+    });
+    
+    res.status(200).json({ clientSecret: paymentIntent.client_secret });
+  } catch (err) {
+    console.error('Stripe error:', err);
+    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  }
+});
+
+//mongodb
+app.get('/api/bookingresults', async (req, res) => {
+  let collection = await db.collection("Bookings");
+  let results = await collection.find({})
+    .limit(50)
+    .toArray();
+  res.send(results).status(200);
+});
+
+app.post('/api/bookings', async (req, res) => {
+  let collection = await db.collection("Bookings");
+  let newDocument = req.body;
+  newDocument.date = new Date();
+  let result = await collection.insertOne(newDocument);
+  res.send(result).status(204);
+});
+
+app.listen(process.env.PORT || 8080, () => {
+  console.log(`Server started on port ${process.env.PORT || 8080}`);
 });

@@ -26,7 +26,10 @@ const BookIcon = () => (
 const Navbar = () => {
   const navLinks = [
     { name: "Home", path: "/" },
-    { name: "Bookings", path: "/" },
+    { name: "Bookings", path: "/bookings" },
+    { name: "Hotels", path: "/rooms" },
+    { name: "Bookings", path: "/book" },
+    { name: "Membership", path: "/" },
   ];
 
   const [isScrolled, setIsScrolled] = React.useState(false);
