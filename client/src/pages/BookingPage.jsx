@@ -41,7 +41,12 @@ const BookingPage = (props = {}) => {
     roomType: "Deluxe Room",
     nights: 1,
     adults: 2,
-    children: 0
+    children: 0,
+    guests: 2,
+    destinationId: "RsBU",
+    hotelId: "050G",
+    countryCode: "SG",
+    price: "$517.50"
   };
 
   const pricing = props.pricing || {
@@ -52,11 +57,12 @@ const BookingPage = (props = {}) => {
     total: "$517.50"
   };
 
-  //This holds booking details of the user
+  //This holds booking details of the user and room to send to MongoDB
   const [form, setForm] = useState({
     firstName: '', lastName: '', phoneNumber: '', emailAddress: '', salutation: '', specialRequests: '',
     billingFirstName: '', billingLastName: '', billingPhoneNumber: '', billingEmailAddress: '',
-    country: 'SG', stateProvince: '', postalCode: '', date: ''
+    country: 'SG', stateProvince: '', postalCode: '', date: '', hotelId: booking.HotelId, destinationId: booking.destinationId, 
+    checkin: booking.checkIn, checkout: booking.checkOut, countryCode: booking.countryCode, guests: booking.adults, price: booking.Price
   });
 
   //This holds validation errors for the form completion
