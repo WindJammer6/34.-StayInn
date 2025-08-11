@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Hotels from "./pages/Hotels";
 import RoomDetails from "./pages/RoomDetails";
 import BookingPage from "./pages/BookingPage";
+import MyBookingsPage from "./pages/MyBookingsPage";
 import TestPage from "./pages/TestPage";
 
 
@@ -17,8 +18,8 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/rooms" element={<Hotels />} />
           <Route path="/detail" element={<RoomDetails />} />
-          <Route path="/book" element={<BookingPage />} />
-          <Route path="/test" element={<TestPage />}/>
+          <Route path="/book" element={<MyBookingsPage />} />
+          <Route path="/bookingconfirmation" element={<BookingPage />}/>
         </Routes>
       </div>
     </div>
