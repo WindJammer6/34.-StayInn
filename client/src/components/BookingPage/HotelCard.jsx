@@ -19,13 +19,6 @@ const HotelCard = ({ hotel }) => (
         </div>
       </div>
       
-      <div className="flex items-center mb-3">
-        {[...Array(hotel.stars)].map((_, i) => (
-          <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-        ))}
-        <span className="ml-2 text-sm text-gray-600">{hotel.reviewCount} reviews</span>
-      </div>
-      
       <div className="flex items-start text-gray-600 mb-4">
         <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
         <span className="text-sm leading-relaxed">{hotel.address}</span>

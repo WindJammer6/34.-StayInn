@@ -6,11 +6,12 @@ import BookingDetails from '../components/BookingPage/BookingDetails';
 import GuestDetailsForm from '../components/BookingPage/GuestDetailsForm';
 import BillingAddressForm from '../components/BookingPage/BillingAddressForm';
 import CheckoutForm from '../components/BookingPage/CheckoutForm';
-
 import { validateForm } from '../components/BookingPage/utils';
 
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
+
+import { useNavigate, useLocation } from "react-router-dom";
 
 
 //checking stripe promise
@@ -20,33 +21,80 @@ const stripePromise = loadStripe('pk_test_51RoRvpJxdrdbDB60c3djoXo8LwZXOtdd3Nvmc
 //if there is no data, hardcoded data is used currently
 //there are 3 props: props.hotel, props.booking and props.pricing
 
+function nightsBetween(startDate, endDate) {
+  // Parse dates without time to avoid timezone issues
+  const start = new Date(startDate + "T00:00:00Z");
+  const end = new Date(endDate + "T00:00:00Z");
+
+  // Calculate difference in milliseconds
+  const diffMs = end - start;
+
+  // Convert milliseconds to days
+  const nights = diffMs / (1000 * 60 * 60 * 24);
+
+  return nights;
+}
+
 const BookingPage = (props = {}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state || {};
+
+  const {
+    hotelData,
+    hotelId,
+    destinationId,
+    checkIn,
+    checkOut,
+    lang,
+    currency,
+    countryCode,
+    guests,
+    price,
+    quantity,
+    totalCost,
+    roomDescription,
+    defaultValues = {},
+  } = state;
+
+  const effectiveParams = {
+    hotelData: hotelData || defaultValues.hotel,
+    hotelId: hotelId || defaultValues.hotelId || "diH7",
+    destinationId: destinationId || defaultValues.destinationId || "WD0M",
+    checkIn: checkIn || defaultValues.checkin,
+    checkOut: checkOut || defaultValues.checkout,
+    lang: lang || defaultValues.lang || "en_US",
+    currency: currency || defaultValues.currency || "SGD",
+    countryCode: countryCode || defaultValues.countryCode || "SG",
+    guests: guests || defaultValues.guests || "2",
+    price: price || defaultValues.price || "512.60",
+    quantity: quantity || defaultValues.quantity || "1",
+    totalCost: totalCost || defaultValues.totalCost || "512.60",
+    roomDescription: roomDescription || defaultValues.roomDescription || "Deluxe Room"
+  };
+
   const hotel = props.hotel || {
-    name: "The Fullerton Hotel Singapore",
-    stars: 5,
-    address: "1 Fullerton Square, 049178 Singapore, Singapore",
-    rating: "9.4",
-    reviewCount: "1,200",
+    name: effectiveParams.hotelData.name || "The Fullerton Hotel Singapore",
+    address: effectiveParams.hotelData.address || "1 Fullerton Square, 049178 Singapore, Singapore",
+    rating: effectiveParams.hotelData.rating || "9.4",
     amenities: [
       { name: "Free Wi-Fi", icon: <Wifi className="h-4 w-4" /> },
       { name: "Room Service", icon: <Shield className="h-4 w-4" /> },
       { name: "Safe", icon: <Lock className="h-4 w-4" /> },
       { name: "Parking", icon: <Car className="h-4 w-4" /> }
-    ]
+    ] || effectiveParams.hotelData.amenities
   };
 
   const booking = props.booking || {
-    checkIn: { date: "Tue, 09 Aug, 2025", time: "From 2:00 PM" },
-    checkOut: { date: "Wed, 10 Aug, 2025", time: "Until 12:00 PM" },
-    roomType: "Deluxe Room",
-    nights: 1,
-    adults: 2,
-    children: 0,
-    guests: 2,
-    destinationId: "RsBU",
-    hotelId: "050G",
-    countryCode: "SG",
-    price: "$517.50"
+    checkIn: effectiveParams.checkIn,
+    checkOut: effectiveParams.checkOut,
+    roomType: effectiveParams.roomDescription,
+    nights: nightsBetween(effectiveParams.checkIn, effectiveParams.checkOut),
+    guests: effectiveParams.guests,
+    destinationId: effectiveParams.destinationId,
+    hotelId: effectiveParams.hotelId,
+    countryCode: effectiveParams.countryCode,
+    price: effectiveParams.totalCost
   };
 
   const pricing = props.pricing || {
@@ -54,15 +102,18 @@ const BookingPage = (props = {}) => {
       { desc: "Room (1 night)", amount: "$450.00" },
       { desc: "Taxes & fees", amount: "$67.50" }
     ],
-    total: "$517.50"
+    total: effectiveParams.price.toString()
   };
+
+  console.log("checkin booking page", effectiveParams.checkIn)
 
   //This holds booking details of the user and room to send to MongoDB
   const [form, setForm] = useState({
     firstName: '', lastName: '', phoneNumber: '', emailAddress: '', salutation: '', specialRequests: '',
     billingFirstName: '', billingLastName: '', billingPhoneNumber: '', billingEmailAddress: '',
-    country: 'SG', stateProvince: '', postalCode: '', date: '', hotelId: booking.HotelId, destinationId: booking.destinationId, 
-    checkin: booking.checkIn, checkout: booking.checkOut, countryCode: booking.countryCode, guests: booking.adults, price: booking.Price
+    country: 'SG', stateProvince: '', postalCode: '', date: '', hotelId: effectiveParams.hotelId, destinationId: effectiveParams.destinationId, 
+    checkin: effectiveParams.checkIn, checkout: effectiveParams.checkOut, countryCode: effectiveParams.countryCode, guests: effectiveParams.adults, 
+    price: effectiveParams.price, quantity: effectiveParams.totalCost, totalCost: effectiveParams.totalCost
   });
 
   //This holds validation errors for the form completion

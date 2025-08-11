@@ -35,6 +35,11 @@ declare module 'stripe' {
         related_customer?: string;
 
         /**
+         * Tokens referencing a Person resource and it's associated account.
+         */
+        related_person?: VerificationSessionCreateParams.RelatedPerson;
+
+        /**
          * The URL that the user will be redirected to upon completing the verification flow.
          */
         return_url?: string;
@@ -96,6 +101,18 @@ declare module 'stripe' {
            * Phone number of user being verified
            */
           phone?: string;
+        }
+
+        interface RelatedPerson {
+          /**
+           * A token representing a connected account. If provided, the person parameter is also required and must be associated with the account.
+           */
+          account: string;
+
+          /**
+           * A token referencing a Person resource that this verification is being used to verify.
+           */
+          person: string;
         }
 
         type Type = 'document' | 'id_number';
@@ -236,7 +253,7 @@ declare module 'stripe' {
          *
          * If your API key is in test mode, verification checks won't actually process, though everything else will occur as if in live mode.
          *
-         * Related guide: [Verify your users' identity documents](https://stripe.com/docs/identity/verify-identity-documents)
+         * Related guide: [Verify your users' identity documents](https://docs.stripe.com/docs/identity/verify-identity-documents)
          */
         create(
           params?: VerificationSessionCreateParams,
@@ -286,9 +303,9 @@ declare module 'stripe' {
         ): ApiListPromise<Stripe.Identity.VerificationSession>;
 
         /**
-         * A VerificationSession object can be canceled when it is in requires_input [status](https://stripe.com/docs/identity/how-sessions-work).
+         * A VerificationSession object can be canceled when it is in requires_input [status](https://docs.stripe.com/docs/identity/how-sessions-work).
          *
-         * Once canceled, future submission attempts are disabled. This cannot be undone. [Learn more](https://stripe.com/docs/identity/verification-sessions#cancel).
+         * Once canceled, future submission attempts are disabled. This cannot be undone. [Learn more](https://docs.stripe.com/docs/identity/verification-sessions#cancel).
          */
         cancel(
           id: string,
@@ -306,7 +323,7 @@ declare module 'stripe' {
          * request logs, etc.
          *
          * A VerificationSession object can be redacted when it is in requires_input or verified
-         * [status](https://stripe.com/docs/identity/how-sessions-work). Redacting a VerificationSession in requires_action
+         * [status](https://docs.stripe.com/docs/identity/how-sessions-work). Redacting a VerificationSession in requires_action
          * state will automatically cancel it.
          *
          * The redaction process may take up to four days. When the redaction process is in progress, the
@@ -319,7 +336,7 @@ declare module 'stripe' {
          * placeholder. The metadata field will also be erased. Redacted objects cannot be updated or
          * used for any purpose.
          *
-         * [Learn more](https://stripe.com/docs/identity/verification-sessions#redact).
+         * [Learn more](https://docs.stripe.com/docs/identity/verification-sessions#redact).
          */
         redact(
           id: string,

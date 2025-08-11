@@ -38,8 +38,9 @@ import defaultHotelImg from "@/assets/hotelImage.png";
 // -----------------------------
 // RoomCard Component
 // -----------------------------
-const RoomCard = ({ room }) => {
+const RoomCard = ({ room, destination, hotelData }) => {
   const marketRates = room.market_rates || [];
+  const navigate = useNavigate();
   console.log("Market rates for room:", marketRates);
   console.log("Surcharges for room:", room.surcharges);
 
@@ -340,6 +341,24 @@ const RoomCard = ({ room }) => {
                       size="lg"
                       onClick={() => {
                         console.log("Reserving:", { quantity, totalCost });
+                        navigate('/bookingconfirmation', {
+                          state:{
+                          hotelData: hotelData,
+                          hotelId: destination.hotelId,
+                          destinationId: destination.destinationId,
+                          checkIn: destination.checkin,
+                          checkOut: destination.checkout,
+                          lang: destination.lang,
+                          currency: destination.currency,
+                          countryCode: destination.countryCode,
+                          guests: destination.guests,
+                          price: price,
+                          quantity: quantity,
+                          totalCost: totalCost,
+                          roomDescription: roomDescription,
+                          defaultValues: {}
+                          }
+                        })
                       }}
                     >
                       Reserve
@@ -484,8 +503,8 @@ const RoomDetails = () => {
   const effectiveParams = {
     hotelId: hotelId || defaultValues.hotelId || "diH7",
     destinationId: destinationId || defaultValues.destinationId || "WD0M",
-    checkin: checkin || defaultValues.checkin || "2025-10-10",
-    checkout: checkout || defaultValues.checkout || "2025-10-17",
+    checkin: checkin,
+    checkout: checkout,
     lang: lang || defaultValues.lang || "en_US",
     currency: currency || defaultValues.currency || "SGD",
     countryCode: countryCode || defaultValues.countryCode || "SG",
@@ -577,6 +596,8 @@ const RoomDetails = () => {
   const validImages = images.filter((_, idx) => !failedImages.has(idx));
   const visibleCount = 3;
   const remainingImages = Math.max(0, validImages.length - visibleCount);
+
+  console.log("checkin", effectiveParams.checkin)
 
   if (loading) {
     return (
@@ -754,7 +775,7 @@ const RoomDetails = () => {
           <CardContent>
             {hotelData.rooms?.length > 0 ? (
               hotelData.rooms.map((r, i) => (
-                <RoomCard key={r.key || i} room={r} />
+                <RoomCard key={r.key || i} room={r} destination={effectiveParams} hotelData = {passedHotelData} />
               ))
             ) : (
               <p className="text-muted-foreground text-center py-8">

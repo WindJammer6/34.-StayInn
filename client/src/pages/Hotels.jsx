@@ -164,8 +164,8 @@ export default function Hotels() {
   //   };
 
   const DEST = destinationId || "WD0M"
-  const IN = checkIn || "2025-10-10"
-  const OUT = checkOut || "2025-10-17"
+  const IN = checkIn
+  const OUT = checkOut
   const GUESTS = Array(Number(rooms) || "1").fill(guestsPerRoom || "2").join("|")
   const CURR = currency || "SGD"
   const CC = countryCode || "SG"

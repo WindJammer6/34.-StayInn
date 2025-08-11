@@ -9,6 +9,13 @@ declare module 'stripe' {
       subscription: string;
 
       /**
+       * Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period. Pass an empty string to remove previously-defined thresholds.
+       */
+      billing_thresholds?: Stripe.Emptyable<
+        SubscriptionItemCreateParams.BillingThresholds
+      >;
+
+      /**
        * The coupons to redeem into discounts for the subscription item.
        */
       discounts?: Stripe.Emptyable<
@@ -32,7 +39,7 @@ declare module 'stripe' {
        *
        * Use `pending_if_incomplete` to update the subscription using [pending updates](https://stripe.com/docs/billing/subscriptions/pending-updates). When you use `pending_if_incomplete` you can only pass the parameters [supported by pending updates](https://stripe.com/docs/billing/pending-updates-reference#supported-attributes).
        *
-       * Use `error_if_incomplete` if you want Stripe to return an HTTP 402 status code if a subscription's invoice cannot be paid. For example, if a payment method requires 3DS authentication due to SCA regulation and further user action is needed, this parameter does not update the subscription and returns an error instead. This was the default behavior for API versions prior to 2019-03-14. See the [changelog](https://stripe.com/docs/upgrades#2019-03-14) to learn more.
+       * Use `error_if_incomplete` if you want Stripe to return an HTTP 402 status code if a subscription's invoice cannot be paid. For example, if a payment method requires 3DS authentication due to SCA regulation and further user action is needed, this parameter does not update the subscription and returns an error instead. This was the default behavior for API versions prior to 2019-03-14. See the [changelog](https://docs.stripe.com/changelog/2019-03-14) to learn more.
        */
       payment_behavior?: SubscriptionItemCreateParams.PaymentBehavior;
 
@@ -73,6 +80,13 @@ declare module 'stripe' {
     }
 
     namespace SubscriptionItemCreateParams {
+      interface BillingThresholds {
+        /**
+         * Number of units that meets the billing threshold to advance the subscription to a new billing period (e.g., it takes 10 $5 units to meet a $50 [monetary threshold](https://stripe.com/docs/api/subscriptions/update#update_subscription-billing_thresholds-amount_gte))
+         */
+        usage_gte: number;
+      }
+
       interface Discount {
         /**
          * ID of the coupon to create a new discount for.
@@ -160,6 +174,13 @@ declare module 'stripe' {
 
     interface SubscriptionItemUpdateParams {
       /**
+       * Define thresholds at which an invoice will be sent, and the subscription advanced to a new billing period. Pass an empty string to remove previously-defined thresholds.
+       */
+      billing_thresholds?: Stripe.Emptyable<
+        SubscriptionItemUpdateParams.BillingThresholds
+      >;
+
+      /**
        * The coupons to redeem into discounts for the subscription item.
        */
       discounts?: Stripe.Emptyable<
@@ -188,7 +209,7 @@ declare module 'stripe' {
        *
        * Use `pending_if_incomplete` to update the subscription using [pending updates](https://stripe.com/docs/billing/subscriptions/pending-updates). When you use `pending_if_incomplete` you can only pass the parameters [supported by pending updates](https://stripe.com/docs/billing/pending-updates-reference#supported-attributes).
        *
-       * Use `error_if_incomplete` if you want Stripe to return an HTTP 402 status code if a subscription's invoice cannot be paid. For example, if a payment method requires 3DS authentication due to SCA regulation and further user action is needed, this parameter does not update the subscription and returns an error instead. This was the default behavior for API versions prior to 2019-03-14. See the [changelog](https://stripe.com/docs/upgrades#2019-03-14) to learn more.
+       * Use `error_if_incomplete` if you want Stripe to return an HTTP 402 status code if a subscription's invoice cannot be paid. For example, if a payment method requires 3DS authentication due to SCA regulation and further user action is needed, this parameter does not update the subscription and returns an error instead. This was the default behavior for API versions prior to 2019-03-14. See the [changelog](https://docs.stripe.com/changelog/2019-03-14) to learn more.
        */
       payment_behavior?: SubscriptionItemUpdateParams.PaymentBehavior;
 
@@ -229,6 +250,13 @@ declare module 'stripe' {
     }
 
     namespace SubscriptionItemUpdateParams {
+      interface BillingThresholds {
+        /**
+         * Number of units that meets the billing threshold to advance the subscription to a new billing period (e.g., it takes 10 $5 units to meet a $50 [monetary threshold](https://stripe.com/docs/api/subscriptions/update#update_subscription-billing_thresholds-amount_gte))
+         */
+        usage_gte: number;
+      }
+
       interface Discount {
         /**
          * ID of the coupon to create a new discount for.
