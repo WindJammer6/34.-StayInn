@@ -224,11 +224,16 @@ const Hero = ({
 
   // Show error below check-in or check-out if submit is invalid
   const checkInError =
-    hasSubmitted && checkIn && checkIn < minCheckIn
+    hasSubmitted && !checkIn
+      ? "Please select a check-in date."
+      : hasSubmitted && checkIn < minCheckIn
       ? `Check-in date can't be before ${minCheckIn}`
       : "";
+
   const checkOutError =
-    hasSubmitted && checkOut && checkOut <= checkIn
+    hasSubmitted && !checkOut
+      ? "Please select a check-out date."
+      : hasSubmitted && checkOut <= checkIn
       ? "Check-out date cannot be before or equal to check-in date."
       : "";
 
@@ -264,6 +269,7 @@ const Hero = ({
       {/* Search Form */}
       <form
         onSubmit={handleSubmit}
+        noValidate // ⬅️ Disables native HTML5 form validation
         className={`${
           isCompact
             ? "text-gray-600 flex flex-col lg:flex-row gap-4 w-full"
@@ -447,7 +453,8 @@ const Hero = ({
           </div>
         </div>
 
-        {/* Search Button */}
+
+        {/* Search Button - CHANGED this by enabling search button regardless.*/ }
         <button
           type="submit"
           className={`flex items-center justify-center gap-2 rounded-md py-3 px-4 my-auto h-fit bg-black text-white cursor-pointer`}
