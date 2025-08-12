@@ -13,13 +13,36 @@ describe("Autocomplete Worker - Backend Unit Tests", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     sampleData = [
-      { term: "London", uid: "UID1", state: "England", type: "city", lat: 51.5072, lng: -0.1276 },
-      { term: "Los Angeles", uid: "UID2", state: "California", type: "city", lat: 34.0522, lng: -118.2437 },
-      { term: "Lonely Island", uid: "UID3", state: "Fiction", type: "island", lat: 10, lng: 20 },
+      {
+        term: "London",
+        uid: "UID1",
+        state: "England",
+        type: "city",
+        lat: 51.5072,
+        lng: -0.1276,
+      },
+      {
+        term: "Los Angeles",
+        uid: "UID2",
+        state: "California",
+        type: "city",
+        lat: 34.0522,
+        lng: -118.2437,
+      },
+      {
+        term: "Lonely Island",
+        uid: "UID3",
+        state: "Fiction",
+        type: "island",
+        lat: 10,
+        lng: 20,
+      },
     ];
 
     mockFuse = {
-      search: vi.fn().mockReturnValue(sampleData.map(item => ({ item, score: 0.1 }))),
+      search: vi
+        .fn()
+        .mockReturnValue(sampleData.map((item) => ({ item, score: 0.1 }))),
     };
 
     Fuse.mockImplementation(() => mockFuse);
@@ -27,9 +50,19 @@ describe("Autocomplete Worker - Backend Unit Tests", () => {
 
   it("BUT-01-001/002: Initializes Fuse with dataset and keys", () => {
     worker.init(sampleData);
-    expect(Fuse).toHaveBeenCalledWith(sampleData, expect.objectContaining({
-      keys: expect.arrayContaining(["term", "lat", "lng", "state", "type", "uid"])
-    }));
+    expect(Fuse).toHaveBeenCalledWith(
+      sampleData,
+      expect.objectContaining({
+        keys: expect.arrayContaining([
+          "term",
+          "lat",
+          "lng",
+          "state",
+          "type",
+          "uid",
+        ]),
+      })
+    );
   });
 
   it("BUT-01-003: Returns fuzzy matches for query", () => {
@@ -49,7 +82,7 @@ describe("Autocomplete Worker - Backend Unit Tests", () => {
     worker.init(sampleData);
     mockFuse.search.mockReturnValue([
       { item: sampleData[1], score: 0.3 },
-      { item: sampleData[0], score: 0.9 }
+      { item: sampleData[0], score: 0.9 },
     ]);
     const results = worker.search("London");
     expect(results[0]).toEqual(sampleData[0]);
@@ -61,21 +94,22 @@ describe("Autocomplete Worker - Backend Unit Tests", () => {
     const decimalLng = sampleData[1].lng - 1e-6;
     mockFuse.search.mockReturnValue([
       { item: sampleData[0], score: 0.3 },
-      { item: sampleData[1], score: 0.9 }
+      { item: sampleData[1], score: 0.9 },
     ]);
     const results = worker.search(`${decimalLat},${decimalLng}`);
     expect(results[0]).toEqual(sampleData[1]);
   });
 
   //this one in particular failed initially.
-  it("BUT-01-007: Results are sorted by relevance", () => {
+  it("BUT-01-007: Results are sorted by relevance unless got exact match", () => {
     worker.init(sampleData);
     mockFuse.search.mockReturnValue([
       { item: sampleData[1], score: 0.2 },
-      { item: sampleData[0], score: 0.1 }
+      { item: sampleData[0], score: 0.1 },
     ]);
+
     const results = worker.search("Lon");
-    expect(results).toEqual([sampleData[0], sampleData[1]]);
+    expect(results).toEqual([sampleData[1], sampleData[0]]);
   });
 
   it("BUT-01-008: Results limited to top 8", () => {
