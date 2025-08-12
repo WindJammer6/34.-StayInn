@@ -429,15 +429,19 @@ export default function Hotels() {
 
   return (
     <div className="container mx-auto px-4 pt-28 pb-12">
-      <Hero
-        isCompact={true}
-        initialDestination={DEST_LABEL}
-        initialDestinationId={DEST}
-        initialCheckIn={IN}
-        initialCheckOut={OUT}
-        initialRooms={parseInt(rooms) || 1}
-        initialGuestsPerRoom={parseInt(GUESTS) || 2}
-      />
+      {/* <div className="-mx-4 sm:-mx-6 lg:-mx-8"> */}
+        <Hero
+          isCompact={true}
+          compactLayout="grid"
+          className="w-full"
+          initialDestination={DEST_LABEL}
+          initialDestinationId={DEST}
+          initialCheckIn={IN}
+          initialCheckOut={OUT}
+          initialRooms={parseInt(rooms) || 1}
+          initialGuestsPerRoom={parseInt(GUESTS) || 2}
+        />
+      {/* </div> */}
 
       <div className="mt-6 flex flex-col lg:flex-row gap-6">
         <aside className="lg:w-72 w-full">
