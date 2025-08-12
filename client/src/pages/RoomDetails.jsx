@@ -65,12 +65,29 @@ const RoomCard = ({ room, destination, hotelData }) => {
     free_cancellation,
   } = room;
 
-  const [quantity, setQuantity] = useState(1);
-  const [totalCost, setTotalCost] = useState(
-    quantity * (price ?? converted_price ?? 0)
+  // How many nights between the dates on `destination`
+  const nights = Math.max(
+    1,
+    Math.round(
+      (new Date(destination.checkout + "T00:00:00Z") -
+        new Date(destination.checkin + "T00:00:00Z")) /
+        (1000 * 60 * 60 * 24)
+    )
   );
 
-  const displayPrice = price ?? converted_price ?? "N/A";
+  // API value looks like total-for-stay per room:
+  const stayTotalPerRoom = price ?? converted_price ?? 0;
+
+  // Prefer an explicit per-night field if the API provides it; else divide
+  const perNight =
+    room.nightly_price ??
+    room.price_per_night ??
+    (nights > 0 ? stayTotalPerRoom / nights : stayTotalPerRoom);
+
+  const [quantity, setQuantity] = useState(1);
+  // total cost for the whole stay across all selected rooms
+  const [totalCost, setTotalCost] = useState(quantity * stayTotalPerRoom);
+
   const { breakfastInfo, displayFields = {} } = roomAdditionalInfo;
   const {
     special_check_in_instructions: checkInInstructions,
@@ -288,9 +305,12 @@ const RoomCard = ({ room, destination, hotelData }) => {
                 <div>
                   <span className="text-2xl font-bold text-primary">
                     {currency}
-                    {typeof displayPrice === "number"
-                      ? displayPrice.toLocaleString()
-                      : displayPrice}
+                    {typeof perNight === "number"
+                      ? perNight.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                      : perNight}
                   </span>
                   <p className="text-xs text-gray-500">per night</p>
 
@@ -311,7 +331,7 @@ const RoomCard = ({ room, destination, hotelData }) => {
                       onClick={() => {
                         const newQ = Math.max(1, quantity - 1);
                         setQuantity(newQ);
-                        setTotalCost(newQ * (price ?? converted_price ?? 0));
+                        setTotalCost(newQ * stayTotalPerRoom);
                       }}
                       disabled={quantity <= 1}
                     >
@@ -326,7 +346,7 @@ const RoomCard = ({ room, destination, hotelData }) => {
                         const max = room.rooms_available || Infinity;
                         const newQ = Math.min(max, quantity + 1);
                         setQuantity(newQ);
-                        setTotalCost(newQ * (price ?? converted_price ?? 0));
+                        setTotalCost(newQ * stayTotalPerRoom);
                       }}
                       disabled={
                         room.rooms_available
@@ -340,25 +360,25 @@ const RoomCard = ({ room, destination, hotelData }) => {
                     <Button
                       size="lg"
                       onClick={() => {
-                        console.log("Reserving:", { quantity, totalCost });
-                        navigate('/bookingconfirmation', {
-                          state:{
-                          hotelData: hotelData,
-                          hotelId: destination.hotelId,
-                          destinationId: destination.destinationId,
-                          checkIn: destination.checkin,
-                          checkOut: destination.checkout,
-                          lang: destination.lang,
-                          currency: destination.currency,
-                          countryCode: destination.countryCode,
-                          guests: destination.guests,
-                          price: price,
-                          quantity: quantity,
-                          totalCost: totalCost,
-                          roomDescription: roomDescription,
-                          defaultValues: {}
-                          }
-                        })
+                        const total = Number(perNight) * quantity * nights;
+                        navigate("/bookingconfirmation", {
+                          state: {
+                            hotelData, // keep
+                            hotelId: destination.hotelId,
+                            destinationId: destination.destinationId,
+                            checkIn: destination.checkin,
+                            checkOut: destination.checkout,
+                            lang: destination.lang,
+                            currency: destination.currency,
+                            countryCode: destination.countryCode,
+                            guests: destination.guests,
+                            price: Number(perNight), // per-night
+                            quantity,
+                            totalCost: total, // full stay total
+                            roomDescription,
+                            defaultValues: {},
+                          },
+                        });
                       }}
                     >
                       Reserve
@@ -561,9 +581,10 @@ const RoomDetails = () => {
     }
   }, [hotelId, destinationId, checkin, checkout]);
 
-  const guestCounts = typeof effectiveParams.guests === 'string' 
-    ? effectiveParams.guests.split("|").map(Number)
-    : [Number(effectiveParams.guests)]; // Handle single number format
+  const guestCounts =
+    typeof effectiveParams.guests === "string"
+      ? effectiveParams.guests.split("|").map(Number)
+      : [Number(effectiveParams.guests)]; // Handle single number format
   const totalGuests = guestCounts.reduce((a, b) => a + b, 0);
   const roomCount = guestCounts.length;
 
@@ -596,7 +617,7 @@ const RoomDetails = () => {
   const validImages = images.filter((_, idx) => !failedImages.has(idx));
   const visibleCount = 3;
   const remainingImages = Math.max(0, validImages.length - visibleCount);
-  
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -610,12 +631,23 @@ const RoomDetails = () => {
 
   if (error || !hotelData) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
-        <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
-        <p className="text-muted-foreground mb-6">{error}</p>
-        <Button onClick={() => navigate(-1)} variant="default">
-          <ArrowLeft className="w-4 h-4 mr-2" /> Go Back
-        </Button>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center space-y-3">
+        <h2 className="text-2xl font-bold">Something went wrong</h2>
+        <p className="text-muted-foreground">{error}</p>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              setError(null);
+              fetchRoomDetails();
+            }}
+            disabled={loading}
+          >
+            {loading ? "Retrying..." : "Retry"}
+          </Button>
+          <Button onClick={() => navigate(-1)} variant="secondary">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Go Back
+          </Button>
+        </div>
       </div>
     );
   }
@@ -773,12 +805,29 @@ const RoomDetails = () => {
           <CardContent>
             {hotelData.rooms?.length > 0 ? (
               hotelData.rooms.map((r, i) => (
-                <RoomCard key={r.key || i} room={r} destination={effectiveParams} hotelData = {passedHotelData} />
+                <RoomCard
+                  key={r.key || i}
+                  room={r}
+                  destination={effectiveParams}
+                  hotelData={hotelData}
+                />
               ))
             ) : (
-              <p className="text-muted-foreground text-center py-8">
-                No rooms available.
-              </p>
+              <div className="text-center py-8 space-y-3">
+                <p className="text-muted-foreground">No rooms available.</p>
+                <Button
+                  onClick={() => {
+                    // optional: clear previous rooms flag so the spinner shows immediately
+                    setHotelData((prev) =>
+                      prev ? { ...prev, rooms: [], completed: false } : prev
+                    );
+                    fetchRoomDetails();
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? "Reloading..." : "Reload"}
+                </Button>
+              </div>
             )}
           </CardContent>
         </Card>

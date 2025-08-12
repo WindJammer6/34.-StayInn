@@ -1,40 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { Wifi, Car, Shield, Lock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import { Wifi, Car, Shield, Lock } from "lucide-react";
 
-import HotelCard from '../components/BookingPage/HotelCard';
-import BookingDetails from '../components/BookingPage/BookingDetails';
-import GuestDetailsForm from '../components/BookingPage/GuestDetailsForm';
-import BillingAddressForm from '../components/BookingPage/BillingAddressForm';
-import CheckoutForm from '../components/BookingPage/CheckoutForm';
-import { validateForm } from '../components/BookingPage/utils';
+import HotelCard from "../components/BookingPage/HotelCard";
+import BookingDetails from "../components/BookingPage/BookingDetails";
+import GuestDetailsForm from "../components/BookingPage/GuestDetailsForm";
+import BillingAddressForm from "../components/BookingPage/BillingAddressForm";
+import CheckoutForm from "../components/BookingPage/CheckoutForm";
+import { validateForm } from "../components/BookingPage/utils";
 
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
 
 import { useNavigate, useLocation } from "react-router-dom";
 
+// ---- Stripe (publishable key; server uses the secret key) ----
+const stripePromise = loadStripe(
+  "pk_test_51RoRvpJxdrdbDB60c3djoXo8LwZXOtdd3NvmcHQrmO9XbjVPRUhXkyrARKnb8AdSUk31OVonwnIaiEAWTLQ7a8j200RbPmff4O"
+);
 
-//checking stripe promise
-const stripePromise = loadStripe('pk_test_51RoRvpJxdrdbDB60c3djoXo8LwZXOtdd3NvmcHQrmO9XbjVPRUhXkyrARKnb8AdSUk31OVonwnIaiEAWTLQ7a8j200RbPmff4O')
-
-//feature 3 should pass data neccessary(props) when using bookingpage
-//if there is no data, hardcoded data is used currently
-//there are 3 props: props.hotel, props.booking and props.pricing
-
+// ---- Helpers ----
 function nightsBetween(startDate, endDate) {
-  // Parse dates without time to avoid timezone issues
+  // Parse as UTC calendar days to avoid timezone drift
   const start = new Date(startDate + "T00:00:00Z");
   const end = new Date(endDate + "T00:00:00Z");
-
-  // Calculate difference in milliseconds
   const diffMs = end - start;
-
-  // Convert milliseconds to days
-  const nights = diffMs / (1000 * 60 * 60 * 24);
-
-  return nights;
+  return diffMs / (1000 * 60 * 60 * 24);
 }
 
+const toNum = (x, fallback = 0) => {
+  const n = Number(x);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const formatMoney = (n, cur = "SGD") => `${cur} ${toNum(n, 0).toFixed(2)}`;
+
+// -----------------------------
+// Booking Page Component
+// -----------------------------
 const BookingPage = (props = {}) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -50,15 +52,16 @@ const BookingPage = (props = {}) => {
     currency,
     countryCode,
     guests,
-    price,
-    quantity,
-    totalCost,
+    price, // nightly price (number)
+    quantity, // number of rooms (number)
+    totalCost, // optional precomputed total from previous page
     roomDescription,
     defaultValues = {},
   } = state;
 
+  // Normalize input / fallbacks
   const effectiveParams = {
-    hotelData: hotelData || defaultValues.hotel,
+    hotelData: hotelData || defaultValues.hotel || {},
     hotelId: hotelId || defaultValues.hotelId || "diH7",
     destinationId: destinationId || defaultValues.destinationId || "WD0M",
     checkIn: checkIn || defaultValues.checkin,
@@ -67,169 +70,186 @@ const BookingPage = (props = {}) => {
     currency: currency || defaultValues.currency || "SGD",
     countryCode: countryCode || defaultValues.countryCode || "SG",
     guests: guests || defaultValues.guests || "2",
-    price: price || defaultValues.price || "512.60",
-    quantity: quantity || defaultValues.quantity || "1",
-    totalCost: totalCost || defaultValues.totalCost || "512.60",
-    roomDescription: roomDescription || defaultValues.roomDescription || "Deluxe Room"
+    price: price ?? defaultValues.price ?? 0,
+    quantity: quantity ?? defaultValues.quantity ?? 1,
+    totalCost: totalCost ?? defaultValues.totalCost,
+    roomDescription:
+      roomDescription || defaultValues.roomDescription || "Deluxe Room",
   };
 
+  // Derive numeric totals consistently (single source of truth)
+  const nightlyPrice = toNum(effectiveParams.price, 0);
+  const qty = toNum(effectiveParams.quantity, 1);
+  const nights = Math.max(
+    1,
+    toNum(nightsBetween(effectiveParams.checkIn, effectiveParams.checkOut), 1)
+  );
+
+  // Prefer a passed totalCost if it exists and is finite; otherwise compute
+  const totalFromState = toNum(effectiveParams.totalCost, NaN);
+  const computedTotal = Number.isFinite(totalFromState)
+    ? totalFromState
+    : nightlyPrice * qty * nights;
+
+  // ---- Presentation models ----
   const hotel = props.hotel || {
     name: effectiveParams.hotelData.name || "The Fullerton Hotel Singapore",
-    address: effectiveParams.hotelData.address || "1 Fullerton Square, 049178 Singapore, Singapore",
+    address:
+      effectiveParams.hotelData.address ||
+      "1 Fullerton Square, 049178 Singapore, Singapore",
     rating: effectiveParams.hotelData.rating || "9.4",
-    image: props.hotel?.image || '/src/assets/hotels/fullertonHotel.jpg', //added image
+    image: props.hotel?.image || "/src/assets/hotels/fullertonHotel.jpg",
     amenities: [
       { name: "Free Wi-Fi", icon: <Wifi className="h-4 w-4" /> },
       { name: "Room Service", icon: <Shield className="h-4 w-4" /> },
       { name: "Safe", icon: <Lock className="h-4 w-4" /> },
-      { name: "Parking", icon: <Car className="h-4 w-4" /> }
-    ] || effectiveParams.hotelData.amenities
+      { name: "Parking", icon: <Car className="h-4 w-4" /> },
+    ],
   };
-
 
   const booking = props.booking || {
     checkIn: effectiveParams.checkIn,
     checkOut: effectiveParams.checkOut,
     roomType: effectiveParams.roomDescription,
-    nights: nightsBetween(effectiveParams.checkIn, effectiveParams.checkOut),
+    nights,
     guests: effectiveParams.guests,
     destinationId: effectiveParams.destinationId,
     hotelId: effectiveParams.hotelId,
     countryCode: effectiveParams.countryCode,
-    price: effectiveParams.totalCost
+    price: computedTotal, // total for the entire stay
   };
 
   const pricing = props.pricing || {
     items: [
-      { desc: "Room (1 night)", amount: "$450.00" },
-      { desc: "Taxes & fees", amount: "$67.50" }
+      {
+        desc: `Room × ${qty} × ${nights} night${nights > 1 ? "s" : ""}`,
+        amount: formatMoney(
+          nightlyPrice * qty * nights,
+          effectiveParams.currency
+        ),
+      },
+      // Add taxes/fees as separate items here if you compute them
     ],
-    total: effectiveParams.price.toString()
+    total: formatMoney(computedTotal, effectiveParams.currency),
   };
 
-  console.log("checkin booking page", effectiveParams.checkIn)
-
-  //This holds booking details of the user and room to send to MongoDB
+  // ---- Form state ----
   const [form, setForm] = useState({
-    firstName: '', lastName: '', phoneNumber: '', emailAddress: '', salutation: '', specialRequests: '',
-    billingFirstName: '', billingLastName: '', billingPhoneNumber: '', billingEmailAddress: '',
-    country: 'SG', stateProvince: '', postalCode: '', date: '', hotelId: effectiveParams.hotelId, destinationId: effectiveParams.destinationId, 
-    checkin: effectiveParams.checkIn, checkout: effectiveParams.checkOut, countryCode: effectiveParams.countryCode, guests: effectiveParams.adults, 
-    price: effectiveParams.price, quantity: effectiveParams.totalCost, totalCost: effectiveParams.totalCost
+    firstName: "",
+    lastName: "",
+    phoneNumber: "",
+    emailAddress: "",
+    salutation: "",
+    specialRequests: "",
+    billingFirstName: "",
+    billingLastName: "",
+    billingPhoneNumber: "",
+    billingEmailAddress: "",
+    country: "SG",
+    stateProvince: "",
+    postalCode: "",
+    date: "",
+    hotelId: effectiveParams.hotelId,
+    destinationId: effectiveParams.destinationId,
+    checkin: effectiveParams.checkIn,
+    checkout: effectiveParams.checkOut,
+    countryCode: effectiveParams.countryCode,
+    guests: effectiveParams.guests,
+    price: nightlyPrice, // per-night price (for record)
+    quantity: qty, // number of rooms
+    totalCost: computedTotal, // full total for the stay
   });
 
-  //This holds validation errors for the form completion
   const [errors, setErrors] = useState({});
-
-  //This holds the loading state of the booking
   const [loading, setLoading] = useState(false);
-
-  //This is for stripe
-  const [clientSecret, setClientSecret] = useState('');
-  const paymentFormRef = React.useRef(null);
+  const [clientSecret, setClientSecret] = useState("");
+  const paymentFormRef = useRef(null);
   const [paymentIntentCreated, setPaymentIntentCreated] = useState(false);
 
+  // ---- Create Payment Intent (uses computed total) ----
   useEffect(() => {
     const createPaymentIntent = async () => {
       try {
-        // Add a delay to prevent rapid successive calls
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const response = await fetch('http://localhost:8080/api/create-payment-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pricing: { total: '$517.50' } })
-        });
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const response = await fetch(
+          "http://localhost:8080/api/create-payment-intent",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            // Send a currency + numeric amount your server expects; adjust if your API uses minor units
+            body: JSON.stringify({
+              currency: effectiveParams.currency,
+              amount: computedTotal,
+            }),
+          }
+        );
 
         if (!response.ok) {
-          // Handle rate limiting
           if (response.status === 429) {
-            console.warn("Rate limited by Stripe, retrying after delay...");
-            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
-            return createPaymentIntent(); // Retry
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+            return createPaymentIntent();
           }
-          throw new Error(`HTTP error! status: ${response.status}`);
+          throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        console.log("Payment intent data:", data);
         setClientSecret(data.clientSecret);
-      } catch (error) {
-        console.error("Failed to create payment intent:", error);
-        if (error.message.includes('429')) {
-          alert("Service is temporarily busy. Please wait a moment and try again.");
-        }
+      } catch (err) {
+        console.error("Failed to create payment intent:", err);
       }
     };
 
-    // Only create payment intent if we don't already have one
     if (!clientSecret && !paymentIntentCreated) {
       setPaymentIntentCreated(true);
       createPaymentIntent();
     }
-  }, []);
+  }, [
+    clientSecret,
+    paymentIntentCreated,
+    computedTotal,
+    effectiveParams.currency,
+  ]);
 
-  //Update the state of the form when the updates are make
+  // ---- Handlers ----
   const updateForm = (e) => {
     const { name, value } = e.target;
-    let processedValue = value;
-
-    setForm(prev => ({ ...prev, [name]: processedValue }));
-
-    //When there is an update, the existing error will be cleared
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  //If there is no error from validateForm, it will make an API call 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate form first
+
     const validationErrors = validateForm(form);
     setErrors(validationErrors);
-    console.log("errors", validationErrors)
-
     if (Object.keys(validationErrors).length > 0) {
       alert("Please fill in all required fields correctly.");
       return;
     }
 
     setLoading(true);
-
     try {
-      // Process payment first
       if (paymentFormRef.current && paymentFormRef.current.submitPayment) {
         const paymentResult = await paymentFormRef.current.submitPayment();
-        
-        if (!paymentResult.success) {
-          throw new Error(paymentResult.error || 'Payment failed');
-        }
-        
-        console.log('Payment successful:', paymentResult.paymentIntent);
+        if (!paymentResult.success)
+          throw new Error(paymentResult.error || "Payment failed");
       } else {
-        throw new Error('Payment form not ready');
+        throw new Error("Payment form not ready");
       }
 
-      // If payment successful, proceed with booking API call
-      const response = await fetch('http://localhost:8080/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("http://localhost:8080/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-
-      if (!response.ok) {
-        throw new Error('Booking submission failed');
-      }
+      if (!response.ok) throw new Error("Booking submission failed");
 
       const data = await response.json();
-      console.log('Booking submitted:', data);
+      console.log("Booking submitted:", data);
       alert("Booking completed successfully!");
       props.onSubmit?.(form);
-
     } catch (error) {
-      console.error('Booking process failed:', error);
+      console.error("Booking process failed:", error);
       alert(`Booking failed: ${error.message}`);
     } finally {
       setLoading(false);
@@ -241,42 +261,43 @@ const BookingPage = (props = {}) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Complete Your Booking</h1>
-          <p className="text-gray-600">We're almost there! Just a few more details needed.</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            Complete Your Booking
+          </h1>
+          <p className="text-gray-600">
+            We're almost there! Just a few more details needed.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Side - Form */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Guest Details */}
-            <GuestDetailsForm 
+            <GuestDetailsForm
+              form={form}
+              errors={errors}
+              onChange={updateForm}
+            />
+            <BillingAddressForm
               form={form}
               errors={errors}
               onChange={updateForm}
             />
 
-            {/* Billing Address */}
-            <BillingAddressForm 
-              form={form}
-              errors={errors}
-              onChange={updateForm}
-            />
-
-            {/* Payment */}
             {clientSecret && (
               <Elements stripe={stripePromise} options={{ clientSecret }}>
                 <CheckoutForm ref={paymentFormRef} />
               </Elements>
             )}
 
-            {/* Submit Button */}
             <div className="bg-white p-6 rounded shadow mt-6">
               <button
                 onClick={handleSubmit}
                 disabled={loading || !clientSecret}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded transition disabled:cursor-not-allowed"
               >
-                {loading ? "Processing Payment & Booking..." : "Complete Booking & Pay"}
+                {loading
+                  ? "Processing Payment & Booking..."
+                  : "Complete Booking & Pay"}
               </button>
               <p className="text-sm text-gray-500 mt-2 text-center">
                 Your payment will be processed when you click this button
