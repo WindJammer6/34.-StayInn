@@ -77,6 +77,7 @@ const BookingPage = (props = {}) => {
     name: effectiveParams.hotelData.name || "The Fullerton Hotel Singapore",
     address: effectiveParams.hotelData.address || "1 Fullerton Square, 049178 Singapore, Singapore",
     rating: effectiveParams.hotelData.rating || "9.4",
+    image: props.hotel?.image || '/src/assets/hotels/fullertonHotel.jpg', //added image
     amenities: [
       { name: "Free Wi-Fi", icon: <Wifi className="h-4 w-4" /> },
       { name: "Room Service", icon: <Shield className="h-4 w-4" /> },
@@ -84,6 +85,7 @@ const BookingPage = (props = {}) => {
       { name: "Parking", icon: <Car className="h-4 w-4" /> }
     ] || effectiveParams.hotelData.amenities
   };
+
 
   const booking = props.booking || {
     checkIn: effectiveParams.checkIn,
