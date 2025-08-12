@@ -107,7 +107,6 @@ describe("Hotels UI test", () => {
         }, { timeout: 20000 });
         expect(screen.queryByText(/Loading hotels/i)).not.toBeInTheDocument();
         const hotelCards = await screen.findAllByTestId("hotel-card");
-        screen.debug()
         for (let i = 0; i < hotelCards.length; i++){
             const card = within(hotelCards[i]);
             expect(card.getByText(RegExp(mockHotelData[i].name, "i"))).toBeInTheDocument();
