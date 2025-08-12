@@ -226,8 +226,8 @@ export default function Hotels() {
 
         const pricesData = await pricesResponse.json();
 
-        console.log("Hotel details response:", detailsData);
-        console.log("Prices response:", pricesData);
+        // console.log("Hotel details response:", detailsData);
+        // console.log("Prices response:", pricesData);
         // console.log("First hotel from details:", detailsData[0]);
         // console.log("Prices data hotels array:", pricesData.hotels);
 
