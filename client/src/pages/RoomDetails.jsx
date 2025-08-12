@@ -596,9 +596,7 @@ const RoomDetails = () => {
   const validImages = images.filter((_, idx) => !failedImages.has(idx));
   const visibleCount = 3;
   const remainingImages = Math.max(0, validImages.length - visibleCount);
-
-  console.log("checkin", effectiveParams.checkin)
-
+  
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
