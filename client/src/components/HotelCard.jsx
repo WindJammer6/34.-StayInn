@@ -121,7 +121,7 @@ export default function HotelCard({
 
   /* ---------- JSX ---------- */
   return (
-    <li className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition">
+    <li data-testid="hotel-card" className="flex bg-white border border-gray-300 rounded-md overflow-hidden hover:shadow-md transition">
       {/* left: image */}
       <img
         src={getImageUrl(h)}

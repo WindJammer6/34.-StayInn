@@ -1,23 +1,73 @@
 import { act, render, screen, within, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import Hotels from "../src/pages/Hotels.jsx"
 import { vi } from 'vitest';
 
 vi.mock('axios');
 
+class MockWorker {
+    constructor() {
+        this.onmessage = null;
+    }
+    postMessage() {}
+    terminate() {}
+}
+
+// Mock the Worker globally
+global.Worker = MockWorker;
+global.URL = {
+    createObjectURL: vi.fn(),
+    revokeObjectURL: vi.fn(),
+}
+
+class MockURL {
+    constructor(url, base) {
+        return {
+            href: url,
+            origin: 'http://localhost',
+            protocol: 'http:',
+            host: 'localhost',
+            hostname: 'localhost',
+            port: '',
+            pathname: url,
+            search: '',
+            hash: ''
+        }
+    }
+}
+global.URL = MockURL;
+global.URL.createObjectURL = vi.fn().mockReturnValue("mockedURL");
+global.URL.revokeObjectURL = vi.fn();
+global.URL.createObjectURL.mockReturnValue("mockedURL");
+
 const mockHotelData = [
     { id: 'h1', name: 'Hotel 1', address: 'Addr 1', rating: 1.1, description: 'Desc 1', "trustyou": {"score": {"overall": 1.1}} },
     { id: 'h2', name: 'Hotel 2', address: 'Addr 2', rating: 2.2, description: 'Desc 2', "trustyou": {"score": {"overall": 2.2}} },
 ]
 
-const mockPriceData = ({
+const mockPriceData = {
     hotels: [
         { id: 'h1', lowest_price: 123 },
         { id: 'h2', lowest_price: 456 }
-    ]
-})
+    ],
+    completed: true
+}
+
+const mockRouterState = {
+    destinationId: "WD0M",
+    checkIn: "2025-10-10",  
+    checkOut: "2025-10-17", 
+    currency: "SGD",
+    countryCode: "SG",
+    guestsPerRoom: "2",
+    rooms: "1",
+    lang: "en_US",
+    destLabel: "Singapore, Singapore"
+};
 
 describe("Hotels UI test", () => {
+
     beforeEach(() => {
         // mock fetched hotel data
         const fetchMock = vi.fn()
@@ -27,14 +77,17 @@ describe("Hotels UI test", () => {
         })
         .mockResolvedValueOnce({
             ok: true,
-            json: async () => mockPriceData
+            json: async () => ({
+                completed: true,
+                hotels: mockPriceData.hotels
+            })
         });
         vi.stubGlobal('fetch', fetchMock);
 
         act(() => {
             // render page
             render( 
-                <MemoryRouter>
+                <MemoryRouter initialEntries={[{ pathname: "/", state: mockRouterState }]}>
                     <Hotels />
                 </MemoryRouter>
             );
@@ -54,6 +107,7 @@ describe("Hotels UI test", () => {
         }, { timeout: 20000 });
         expect(screen.queryByText(/Loading hotels/i)).not.toBeInTheDocument();
         const hotelCards = await screen.findAllByTestId("hotel-card");
+        screen.debug()
         for (let i = 0; i < hotelCards.length; i++){
             const card = within(hotelCards[i]);
             expect(card.getByText(RegExp(mockHotelData[i].name, "i"))).toBeInTheDocument();
@@ -68,7 +122,6 @@ describe("Hotels UI test", () => {
             });
         }
     }, { timeout: 20000 });
-
 
     // Display fallback image
     test('Fallback image is displayed for hotels without proper image url', async () => {
