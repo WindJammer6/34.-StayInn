@@ -171,26 +171,19 @@ const BookingPage = (props = {}) => {
     const createPaymentIntent = async () => {
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
+        console.log(effectiveParams.computedTotal)
         const response = await fetch(
           "http://localhost:8080/api/create-payment-intent",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            // Send a currency + numeric amount your server expects; adjust if your API uses minor units
             body: JSON.stringify({
               currency: effectiveParams.currency,
-              amount: computedTotal,
+              amount: effectiveParams.totalCost
             }),
           }
         );
-
-        if (!response.ok) {
-          if (response.status === 429) {
-            await new Promise((resolve) => setTimeout(resolve, 3000));
-            return createPaymentIntent();
-          }
-          throw new Error(`HTTP ${response.status}`);
-        }
+        console.log("returned")
 
         const data = await response.json();
         setClientSecret(data.clientSecret);

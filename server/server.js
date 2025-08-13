@@ -132,18 +132,18 @@ app.get("/api/hotels/prices", async (req, res) => {
 //for stripe
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
-    const { pricing } = req.body;
+    const { currency, amount } = req.body;
     
-    if (!pricing || !pricing.total) {
+    if (!currency || !amount) {
       return res.status(400).json({ error: 'Pricing information is required' });
     }
     
-    console.log("Pricing received:", pricing);
-    const amount = Math.round(parseFloat(pricing.total.replace('$', '')) * 100);
+    console.log("Pricing received:", amount);
+    const amount_in_cents =  Math.round(parseFloat(amount) * 100);
     
     const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: 'sgd',
+      amount: amount_in_cents,
+      currency: currency.toLowerCase(),
       automatic_payment_methods: { enabled: true }
     });
     
