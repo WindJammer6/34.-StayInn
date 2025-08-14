@@ -18,6 +18,7 @@ function formatDate(date) {
 const Hero = ({
   // Props for reusing this component in different contexts
   isCompact = false, // For use in Hotels page vs Home page
+  centered = false, // For centering content
   initialDestination = "",
   initialDestinationId = "",
   initialCheckIn = "",
@@ -250,8 +251,8 @@ const Hero = ({
     <div
       className={`${
         isCompact
-          ? "bg-white rounded-lg border shadow-sm p-6"
-          : 'flex flex-col items-start justify-center px-6 md:px-16 lg:px-24 xl:px-32 text-white bg-[url("/src/assets/heroImage.png")] bg-no-repeat bg-cover bg-center h-screen'
+          ? `bg-white rounded-lg border shadow-sm p-6 ${centered ? 'flex flex-col items-center text-center w-full' : ''}`
+          : `flex flex-col ${centered ? 'items-center text-center' : 'items-start'} justify-center px-6 md:px-16 lg:px-24 xl:px-32 text-white bg-[url("/src/assets/heroImage.png")] bg-no-repeat bg-cover bg-center h-screen`
       } ${className}`}
     >
       {/* Title - only show on full Hero */}
@@ -272,7 +273,7 @@ const Hero = ({
         noValidate // ⬅️ Disables native HTML5 form validation
         className={`${
           isCompact
-            ? "text-gray-600 flex flex-col lg:flex-row gap-4 w-full"
+            ? `text-gray-600 flex flex-col lg:flex-row gap-4 ${centered ? 'items-center justify-center max-w-4xl mx-auto' : 'w-full'}`
             : "bg-white text-gray-600 rounded-lg px-6 py-4 mt-9 flex flex-col md:flex-row gap-4"
         }`}
       >

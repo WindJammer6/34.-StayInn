@@ -48,6 +48,32 @@ const FilterRow = ({ label, checked, onToggle }) => (
   </label>
 );
 
+const GuestRatingFilterRow = ({ label, value, checked, onSelect }) => (
+  <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+    <input
+      type="radio"
+      name="guestRating"
+      className="accent-blue-600"
+      checked={checked}
+      onChange={() => onSelect(value)}
+    />
+    <span>{label}</span>
+  </label>
+);
+
+const StarRatingFilterRow = ({ label, value, checked, onSelect }) => (
+  <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+    <input
+      type="radio"
+      name="starRating"
+      className="accent-blue-600"
+      checked={checked}
+      onChange={() => onSelect(value)}
+    />
+    <span>{label}</span>
+  </label>
+);
+
 const Filters = ({ draft, onChangeDraft, onApply }) => {
   const patch = (obj) => onChangeDraft({ ...draft, ...obj });
 
@@ -73,32 +99,38 @@ const Filters = ({ draft, onChangeDraft, onApply }) => {
         <Separator />
         <div>
           <p className="text-sm font-medium mb-2">Star Rating</p>
+          <StarRatingFilterRow
+            label="Any rating"
+            value={null}
+            checked={draft.starRating === null || draft.starRating === undefined}
+            onSelect={() => patch({ starRating: null })}
+          />
           {[5, 4, 3, 2, 1].map((stars) => (
-            <FilterRow
+            <StarRatingFilterRow
               key={stars}
-              label={"★".repeat(stars)}
-              checked={draft.starRatings.includes(stars)}
-              onToggle={() =>
-                patch({
-                  starRatings: toggleArrayItem(draft.starRatings, stars),
-                })
-              }
+              label={"★".repeat(stars) + "+"}
+              value={stars}
+              checked={draft.starRating === stars}
+              onSelect={(value) => patch({ starRating: value })}
             />
           ))}
         </div>
         <Separator />
         <div>
           <p className="text-sm font-medium mb-2">Guest Rating</p>
+          <GuestRatingFilterRow
+            label="Any rating"
+            value={null}
+            checked={draft.guestRating === null || draft.guestRating === undefined}
+            onSelect={() => patch({ guestRating: null })}
+          />
           {GUEST_THRESHOLDS.map((thr) => (
-            <FilterRow
+            <GuestRatingFilterRow
               key={thr}
               label={`${thr}+`}
-              checked={draft.guestRatings.includes(thr)}
-              onToggle={() =>
-                patch({
-                  guestRatings: toggleArrayItem(draft.guestRatings, thr),
-                })
-              }
+              value={thr}
+              checked={draft.guestRating === thr}
+              onSelect={(value) => patch({ guestRating: value })}
             />
           ))}
         </div>
@@ -187,8 +219,8 @@ export default function Hotels() {
 
   const INIT_FILTERS = {
     priceRanges: [],
-    starRatings: [],
-    guestRatings: [],
+    starRating: null, // Changed from starRatings array to single value
+    guestRating: null, // Changed from guestRatings array to single value
   };
   const [filters, setFilters] = useState(INIT_FILTERS);
   const [pending, setPending] = useState(INIT_FILTERS);
@@ -293,21 +325,28 @@ export default function Hotels() {
       }
 
       // Star rating filter
-      if (filters.starRatings.length) {
-        const hotelStarRating = Math.round(h.rating || 0);
-        if (!filters.starRatings.includes(hotelStarRating)) {
+      if (filters.starRating !== null && filters.starRating !== undefined) {
+        const hotelStarRating = Math.floor(h.rating || 0);
+        // Check if hotel meets the selected threshold (star rating and above)
+        if (hotelStarRating < filters.starRating) {
           return false;
         }
       }
 
       // Guest rating filter
-      if (filters.guestRatings.length) {
-        // Convert guest rating to 0-10 scale (assuming API returns 0-1)
-        const guestRating = (h.trustyou?.score?.overall ?? 0) * 10;
-        // Check if hotel meets any of the selected thresholds
-        const meetsThreshold = filters.guestRatings.some(
-          (threshold) => guestRating >= threshold
-        );
+      if (filters.guestRating !== null && filters.guestRating !== undefined) {
+        // The API returns guest rating on 0-100 scale, convert to 0-10 scale
+        const guestRating = (h.trustyou?.score?.overall ?? 0) / 10;
+        
+        // Round to 1 decimal place to handle floating-point precision issues
+        const roundedRating = Math.round(guestRating * 10) / 10;
+        
+        // Check if hotel meets the selected threshold
+        const meetsThreshold = roundedRating >= filters.guestRating;
+        
+        // Optional debug logging
+        // console.log(`✅ ${h.name}: Rating ${roundedRating} >= ${filters.guestRating}? ${meetsThreshold}`);
+        
         if (!meetsThreshold) return false;
       }
 
@@ -380,16 +419,12 @@ export default function Hotels() {
       parts.push(`Price: ${filters.priceRanges.join(", ")}`);
     }
 
-    if (filters.starRatings.length) {
-      parts.push(
-        `Stars: ${filters.starRatings.map((s) => `${s}★`).join(", ")}`
-      );
+    if (filters.starRating !== null && filters.starRating !== undefined) {
+      parts.push(`Stars: ${"★".repeat(filters.starRating)}+`);
     }
 
-    if (filters.guestRatings.length) {
-      parts.push(
-        `Guest Rating: ${filters.guestRatings.map((g) => `${g}+`).join(", ")}`
-      );
+    if (filters.guestRating !== null && filters.guestRating !== undefined) {
+      parts.push(`Guest Rating: ${filters.guestRating}+`);
     }
 
     return parts.length > 0 ? (
@@ -429,19 +464,16 @@ export default function Hotels() {
 
   return (
     <div className="container mx-auto px-4 pt-28 pb-12">
-      {/* <div className="-mx-4 sm:-mx-6 lg:-mx-8"> */}
-        <Hero
-          isCompact={true}
-          compactLayout="grid"
-          className="w-full"
-          initialDestination={DEST_LABEL}
-          initialDestinationId={DEST}
-          initialCheckIn={IN}
-          initialCheckOut={OUT}
-          initialRooms={parseInt(rooms) || 1}
-          initialGuestsPerRoom={parseInt(GUESTS) || 2}
-        />
-      {/* </div> */}
+      <Hero
+        isCompact={true}
+        centered={true}
+        initialDestination={DEST_LABEL}
+        initialDestinationId={DEST}
+        initialCheckIn={IN}
+        initialCheckOut={OUT}
+        initialRooms={parseInt(rooms) || 1}
+        initialGuestsPerRoom={parseInt(GUESTS) || 2}
+      />
 
       <div className="mt-6 flex flex-col lg:flex-row gap-6">
         <aside className="lg:w-72 w-full">
