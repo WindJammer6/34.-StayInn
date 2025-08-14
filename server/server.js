@@ -1,10 +1,10 @@
-require('dotenv').config();
+require("dotenv").config();
 const express = require("express");
 const app = express();
 const cors = require("cors");
 const axios = require("axios");
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const db = require('./db/conn.js').db;
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const db = require("./db/conn.js").db;
 
 const corsOptions = {
   origin: [process.env.CLIENT_URL],
@@ -58,22 +58,24 @@ app.get("/api/hotels/:id/price", async (req, res) => {
 
 // search API with dummy data
 const hotels = [
-  {name: "HolidayInn", city: "Malaysia", price: "$111/night"},
-  {name: "Hotel81", city: "Singapore", price: "$81/night"},
-  {name: "Ascott", city: "Thailand", price: "$200/night"}
+  { name: "HolidayInn", city: "Malaysia", price: "$111/night" },
+  { name: "Hotel81", city: "Singapore", price: "$81/night" },
+  { name: "Ascott", city: "Thailand", price: "$200/night" },
 ];
 
 app.post("/api/search-hotels", (req, res) => {
-  const {destination} = req.body;
+  const { destination } = req.body;
 
   // error handling
-  if (!destination){
-    return res.status(400).json({error: "Destination required"});
+  if (!destination) {
+    return res.status(400).json({ error: "Destination required" });
   }
 
   // exact matching for search
   // if want to use partical matching: h => h.city.toLowerCase() .includes(destination.toLowerCase())
-  const filtered = hotels.filter(h => h.city.toLowerCase() === destination.toLowerCase());
+  const filtered = hotels.filter(
+    (h) => h.city.toLowerCase() === destination.toLowerCase()
+  );
   res.json(filtered);
 });
 
@@ -130,40 +132,40 @@ app.get("/api/hotels/prices", async (req, res) => {
 });
 
 //for stripe
-app.post('/api/create-payment-intent', async (req, res) => {
+app.post("/api/create-payment-intent", async (req, res) => {
   try {
     const { currency, amount } = req.body;
-    
+
     if (!currency || !amount) {
-      return res.status(400).json({ error: 'Pricing information is required' });
+      return res.status(400).json({ error: "Pricing information is required" });
     }
-    
+
     console.log("Pricing received:", amount);
-    const amount_in_cents =  Math.round(parseFloat(amount) * 100);
-    
+    const amount_in_cents = Math.round(parseFloat(amount) * 100);
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount_in_cents,
       currency: currency.toLowerCase(),
-      automatic_payment_methods: { enabled: true }
+      automatic_payment_methods: { enabled: true },
     });
-    
+
     res.status(200).json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
-    console.error('Stripe error:', err);
-    res.status(500).json({ error: 'Internal Server Error', details: err.message });
+    console.error("Stripe error:", err);
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: err.message });
   }
 });
 
 //mongodb
-app.get('/api/bookingresults', async (req, res) => {
+app.get("/api/bookingresults", async (req, res) => {
   let collection = await db.collection("Bookings");
-  let results = await collection.find({})
-    .limit(50)
-    .toArray();
+  let results = await collection.find({}).limit(50).toArray();
   res.send(results).status(200);
 });
 
-app.post('/api/bookings', async (req, res) => {
+app.post("/api/bookings", async (req, res) => {
   let collection = await db.collection("Bookings");
   let newDocument = req.body;
   newDocument.date = new Date();
@@ -171,6 +173,11 @@ app.post('/api/bookings', async (req, res) => {
   res.send(result).status(204);
 });
 
-app.listen(process.env.PORT || 8080, () => {
-  console.log(`Server started on port ${process.env.PORT || 8080}`);
-});
+// IMPORTANT: Guard the listener so it doesn't run during tests
+if (process.env.NODE_ENV !== "test") {
+  app.listen(process.env.PORT || 8080, () => {
+    console.log(`Server started on port ${process.env.PORT || 8080}`);
+  });
+}
+
+module.exports = app;

@@ -75,14 +75,16 @@ const RoomCard = ({ room, destination, hotelData }) => {
     )
   );
 
-  // API value looks like total-for-stay per room:
   const stayTotalPerRoom = price ?? converted_price ?? 0;
 
-  // Prefer an explicit per-night field if the API provides it; else divide
   const perNight =
-    room.nightly_price ??
-    room.price_per_night ??
-    (nights > 0 ? stayTotalPerRoom / nights : stayTotalPerRoom);
+    (price ?? converted_price) == null &&
+    room.nightly_price == null &&
+    room.price_per_night == null
+      ? "N/A"
+      : room.nightly_price ??
+        room.price_per_night ??
+        (nights > 0 ? stayTotalPerRoom / nights : stayTotalPerRoom);
 
   const [quantity, setQuantity] = useState(1);
   // total cost for the whole stay across all selected rooms

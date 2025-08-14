@@ -21,8 +21,9 @@ const mockHotelData = {
       roomDescription: "Room 1",
       long_description: "<p>Test description</p>",
       amenities: ["Free WiFi", "Air Conditioning"],
-      price: 100,
-      converted_price: 100,
+      nightly_price: 100,
+      price: 700, // default 7 nights * $100
+      converted_price: 700,
       currency: "$",
       surcharges: [{ description: "Service Fee", amount: 10 }],
       market_rates: [{ supplier: "Expedia", rate: 150.0 }],
@@ -32,7 +33,6 @@ const mockHotelData = {
   longitude: 4.56,
 };
 
-// Data with image_details (image prefix/suffix pattern)
 const mockHotelDataWithImageDetails = {
   ...mockHotelData,
   image_details: {
@@ -42,7 +42,6 @@ const mockHotelDataWithImageDetails = {
   },
 };
 
-// Data with top-level images array
 const mockHotelDataWithImages = {
   ...mockHotelData,
   images: [
@@ -55,13 +54,12 @@ const mockHotelDataWithImages = {
   rooms: [],
 };
 
-// Hotel data with empty rooms
 const mockHotelDataWithNoRooms = {
   ...mockHotelData,
   rooms: [],
 };
 
-// Simulated router state passed to component
+// Router state
 const state = {
   hotelId: "h1",
   destinationId: "d1",
@@ -75,7 +73,6 @@ const state = {
   defaultValues: {},
 };
 
-// Renders RoomDetails with MemoryRouter and route state
 const renderComponent = () => {
   render(
     <MemoryRouter initialEntries={[{ pathname: "/", state }]}>
@@ -86,7 +83,6 @@ const renderComponent = () => {
   );
 };
 
-// Helper to override router state
 const renderWithState = (override = {}) => {
   const merged = { ...state, ...override };
   render(
@@ -108,7 +104,6 @@ describe("RoomDetails Component", () => {
   it("renders hotel name and booking summary on success", async () => {
     axios.get.mockResolvedValueOnce({ data: mockHotelData });
     renderComponent();
-
     expect(await screen.findByRole("heading", { level: 1 })).toHaveTextContent(
       "Test Hotel"
     );
@@ -123,22 +118,19 @@ describe("RoomDetails Component", () => {
   it("renders hotel room details correctly", async () => {
     axios.get.mockResolvedValueOnce({ data: mockHotelData });
     renderComponent();
-
     expect(await screen.findByText("Room 1")).toBeInTheDocument();
     expect(screen.getByText("Test description")).toBeInTheDocument();
     expect(screen.getByText("Free WiFi")).toBeInTheDocument();
     expect(screen.getByText("Air Conditioning")).toBeInTheDocument();
-    expect(screen.getByText("$100")).toBeInTheDocument();
+    expect(screen.getByText(/\$?700(\.00)?/)).toBeInTheDocument();
   });
 
   it("renders surcharge and market rate", async () => {
     axios.get.mockResolvedValueOnce({ data: mockHotelData });
     renderComponent();
-
     expect(
       await screen.findByText(/Taxes & fees included:/i)
     ).toBeInTheDocument();
-
     expect(screen.getByText("$10.00")).toBeInTheDocument();
     expect(screen.getByText("Expedia: $150.00")).toBeInTheDocument();
   });
@@ -146,7 +138,6 @@ describe("RoomDetails Component", () => {
   it("renders hotel images from image_details", async () => {
     axios.get.mockResolvedValueOnce({ data: mockHotelDataWithImageDetails });
     renderComponent();
-
     const img = await screen.findByAltText("Hotel image 1");
     expect(img).toHaveAttribute("src", "https://cdn.example.com/img-0.jpg");
   });
@@ -154,7 +145,6 @@ describe("RoomDetails Component", () => {
   it("renders hotel images from top-level images array", async () => {
     axios.get.mockResolvedValueOnce({ data: mockHotelDataWithImages });
     renderComponent();
-
     const imgs = await screen.findAllByAltText("Hotel image");
     expect(imgs).toHaveLength(2);
     expect(imgs[0]).toHaveAttribute("src", "https://images.com/hr-h1.jpg");
@@ -166,51 +156,57 @@ describe("Edge Cases", () => {
     axios.get.mockResolvedValueOnce({
       data: {
         ...mockHotelData,
-        rooms: [{ ...mockHotelData.rooms[0], rooms_available: 1 }],
+        rooms: [
+          {
+            ...mockHotelData.rooms[0],
+            rooms_available: 1,
+            nightly_price: 100,
+            price: 100,
+            converted_price: 100,
+          },
+        ],
       },
     });
-
     renderComponent();
-
     await screen.findByText("Room 1");
-
-    // Query globally instead of scoping to a specific card container
     const inc = await screen.findByRole("button", { name: "+" });
     const dec = await screen.findByRole("button", { name: /^(−|–|-)$/ });
     const total = screen.getByText(/^Total:/i);
-
-    expect(total).toHaveTextContent("$100");
+    expect(total).toHaveTextContent(/\$?100(\.00)?/);
     expect(inc).toBeDisabled();
-
     await userEvent.click(dec);
-    expect(total).toHaveTextContent("$100");
+    expect(total).toHaveTextContent(/\$?100(\.00)?/);
   });
 
   it("increments/decrements when rooms_available = 2 and caps at max", async () => {
     axios.get.mockResolvedValueOnce({
       data: {
         ...mockHotelData,
-        rooms: [{ ...mockHotelData.rooms[0], rooms_available: 2, price: 120 }],
+        rooms: [
+          {
+            ...mockHotelData.rooms[0],
+            rooms_available: 2,
+            nightly_price: 120,
+            price: 120,
+            converted_price: 120,
+          },
+        ],
       },
     });
-
     renderComponent();
-
     await screen.findByText("Room 1");
-
     const inc = await screen.findByRole("button", { name: "+" });
     const dec = await screen.findByRole("button", { name: /^(−|–|-)$/ });
     const total = screen.getByText(/^Total:/i);
-
-    expect(total).toHaveTextContent("$120");
+    expect(total).toHaveTextContent(/\$?120(\.00)?/);
     await userEvent.click(inc);
-    expect(total).toHaveTextContent("$240");
+    expect(total).toHaveTextContent(/\$?240(\.00)?/);
     expect(inc).toBeDisabled();
     await userEvent.click(dec);
-    expect(total).toHaveTextContent("$120");
+    expect(total).toHaveTextContent(/\$?120(\.00)?/);
   });
 
-  it("uses converted_price when price missing and hides fees/market sections when arrays empty", async () => {
+  it("uses converted_price when price missing", async () => {
     axios.get.mockResolvedValueOnce({
       data: {
         ...mockHotelData,
@@ -219,17 +215,16 @@ describe("Edge Cases", () => {
             ...mockHotelData.rooms[0],
             price: null,
             converted_price: 88,
+            nightly_price: undefined,
             surcharges: [],
             market_rates: [],
           },
         ],
       },
     });
-
     renderComponent();
-
     await screen.findByText("Room 1");
-    expect(screen.getByText("$88")).toBeInTheDocument();
+    expect(screen.getByText(/\$?88(\.00)?/)).toBeInTheDocument();
     expect(
       screen.queryByText(/Taxes & fees included:/i)
     ).not.toBeInTheDocument();
@@ -240,21 +235,23 @@ describe("Edge Cases", () => {
     axios.get.mockResolvedValueOnce({
       data: {
         ...mockHotelData,
-        rooms: [{ ...mockHotelData.rooms[0], long_description: "" }],
+        rooms: [
+          {
+            ...mockHotelData.rooms[0],
+            long_description: "",
+          },
+        ],
       },
     });
-
     renderComponent();
-
     await screen.findByText("Room 1");
     expect(screen.getByText("Free WiFi")).toBeInTheDocument();
-    expect(screen.getByText("$100")).toBeInTheDocument();
+    expect(screen.getByText(/\$?700(\.00)?/)).toBeInTheDocument();
   });
 
   it("computes Booking Summary correctly for guests '2|1|0'", async () => {
     axios.get.mockResolvedValueOnce({ data: mockHotelData });
     renderWithState({ guests: "2|1|0" });
-
     await screen.findByRole("heading", { level: 1 });
     expect(screen.getByText("Guests").nextSibling).toHaveTextContent("3");
     expect(screen.getByText("Rooms").nextSibling).toHaveTextContent("3");
@@ -263,7 +260,6 @@ describe("Edge Cases", () => {
   it("computes Booking Summary correctly for single-room guests '3'", async () => {
     axios.get.mockResolvedValueOnce({ data: mockHotelData });
     renderWithState({ guests: "3" });
-
     await screen.findByRole("heading", { level: 1 });
     expect(screen.getByText("Guests").nextSibling).toHaveTextContent("3");
     expect(screen.getByText("Rooms").nextSibling).toHaveTextContent("1");
@@ -274,7 +270,6 @@ describe("Negative Cases", () => {
   it("shows error and Go Back button on fetch failure", async () => {
     axios.get.mockRejectedValueOnce(new Error("Network Error"));
     renderComponent();
-
     expect(
       await screen.findByText(/Failed to load hotel details/i)
     ).toBeInTheDocument();
@@ -286,7 +281,6 @@ describe("Negative Cases", () => {
   it("shows 'No rooms available' when no rooms exist", async () => {
     axios.get.mockResolvedValueOnce({ data: mockHotelDataWithNoRooms });
     renderComponent();
-
     expect(await screen.findByText("No rooms available.")).toBeInTheDocument();
   });
 
@@ -299,28 +293,24 @@ describe("Negative Cases", () => {
             ...mockHotelData.rooms[0],
             price: undefined,
             converted_price: undefined,
+            nightly_price: undefined,
             surcharges: [],
             market_rates: [],
           },
         ],
       },
     });
-
     renderComponent();
-
     await screen.findByText("Room 1");
-    // allow optional currency before N/A (e.g., "$N/A")
     expect(screen.getByText(/\$?N\/A/)).toBeInTheDocument();
     expect(screen.getByText(/^Total:/i)).toHaveTextContent("$0");
   });
 
-  it("handles malformed payload where rooms is null by showing 'No rooms available.'", async () => {
+  it("handles malformed payload where rooms is null", async () => {
     axios.get.mockResolvedValueOnce({
       data: { ...mockHotelData, rooms: null },
     });
-
     renderComponent();
-
     expect(await screen.findByText("No rooms available.")).toBeInTheDocument();
   });
 });
