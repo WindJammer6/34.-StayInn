@@ -1,12 +1,13 @@
 import React from "react";
 import clsx from "clsx";
 
-export const Card = ({ children, className = "" }) => (
+export const Card = ({ children, className = "", "data-testid": testId }) => (
   <div
     className={clsx(
       "bg-white rounded-xl shadow-sm border border-gray-200",
       className
     )}
+    data-testid={testId}
   >
     {children}
   </div>

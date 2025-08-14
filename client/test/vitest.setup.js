@@ -1,5 +1,6 @@
 // vitest.setup.js
 import { expect, vi, afterEach } from 'vitest';
+import '@testing-library/jest-dom'
 import '@testing-library/jest-dom/vitest'; // gives .toBeInTheDocument, etc.
 
 // ------------------------------------------------------------------

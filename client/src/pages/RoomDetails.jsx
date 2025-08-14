@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
@@ -27,13 +28,13 @@ import {
   Cigarette,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "../components/ui/button.jsx";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card.jsx";
+import { Separator } from "../components/ui/separator.jsx";
 import parse, { domToReact } from "html-react-parser";
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
-import defaultHotelImg from "@/assets/hotelImage.png";
+import defaultHotelImg from "../assets/hotelImage.png";
 
 // -----------------------------
 // RoomCard Component
@@ -88,8 +89,10 @@ const RoomCard = ({ room, destination, hotelData }) => {
 
   const [quantity, setQuantity] = useState(1);
   // total cost for the whole stay across all selected rooms
-  const [totalCost, setTotalCost] = useState(quantity * stayTotalPerRoom);
-
+  const [totalCost, setTotalCost] = useState(
+    quantity * (price ?? converted_price ?? 0)
+  );
+  const displayPrice = price ?? converted_price ?? "N/A";
   const { breakfastInfo, displayFields = {} } = roomAdditionalInfo;
   const {
     special_check_in_instructions: checkInInstructions,
@@ -146,6 +149,20 @@ const RoomCard = ({ room, destination, hotelData }) => {
         </span>
       );
     }
+    const nights = Math.max(
+      1,
+      Math.round(
+        (new Date(destination.checkout + "T00:00:00Z") -
+          new Date(destination.checkin + "T00:00:00Z")) /
+          (1000 * 60 * 60 * 24)
+      )
+    );
+
+    const perNight = displayPrice === "N/A" 
+      ? "N/A"
+      : nights > 0 
+        ? Number(displayPrice) / nights 
+        : Number(displayPrice);
 
     // Match entire phrase in plain <p> tags (no bold)
     if (domNode.name === "p" && domNode.children?.length === 1) {
@@ -167,7 +184,7 @@ const RoomCard = ({ room, destination, hotelData }) => {
 
   return (
     <>
-      <Card>
+      <Card data-testid="room-card">
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Carousel */}
@@ -305,14 +322,17 @@ const RoomCard = ({ room, destination, hotelData }) => {
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-2 gap-4">
                 {/* Price section (left side) */}
                 <div>
-                  <span className="text-2xl font-bold text-primary">
+                  <span 
+                    className="text-2xl font-bold text-primary" 
+                    data-testid={`room-price-${room.key}`}
+                  >
                     {currency}
-                    {typeof perNight === "number"
-                      ? perNight.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
+                    {typeof displayPrice === "number"
+                      ? displayPrice.toLocaleString(undefined, {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 0,
                         })
-                      : perNight}
+                      : displayPrice}
                   </span>
                   <p className="text-xs text-gray-500">per night</p>
 
@@ -362,21 +382,21 @@ const RoomCard = ({ room, destination, hotelData }) => {
                     <Button
                       size="lg"
                       onClick={() => {
-                        const total = Number(perNight) * quantity * nights;
+                        const total = Number(displayPrice) * quantity * nights;
                         navigate("/bookingconfirmation", {
                           state: {
-                            hotelData, // keep
+                            hotelData, 
                             hotelId: destination.hotelId,
                             destinationId: destination.destinationId,
-                            checkIn: destination.checkin,
-                            checkOut: destination.checkout,
+                            checkIn: destination.checkin,  
+                            checkOut: destination.checkout, 
                             lang: destination.lang,
                             currency: destination.currency,
                             countryCode: destination.countryCode,
                             guests: destination.guests,
-                            price: Number(perNight), // per-night
+                            price: Number(displayPrice), 
                             quantity,
-                            totalCost: total, // full stay total
+                            totalCost: total, 
                             roomDescription,
                             defaultValues: {},
                           },
@@ -475,6 +495,7 @@ const RoomCard = ({ room, destination, hotelData }) => {
           <button
             onClick={() => setShowModal(false)}
             className="absolute top-4 right-4 text-white text-3xl font-bold"
+            aria-label="Close gallery"
           >
             &times;
           </button>
@@ -523,19 +544,24 @@ const RoomDetails = () => {
   } = state;
 
   const effectiveParams = {
-    hotelId: hotelId || defaultValues.hotelId || "diH7",
-    destinationId: destinationId || defaultValues.destinationId || "WD0M",
-    checkin: checkin,
-    checkout: checkout,
-    lang: lang || defaultValues.lang || "en_US",
-    currency: currency || defaultValues.currency || "SGD",
-    countryCode: countryCode || defaultValues.countryCode || "SG",
-    guests: guests || defaultValues.guests || "2",
+    hotelId: hotelId ?? defaultValues.hotelId ?? "diH7",
+    destinationId: destinationId ?? defaultValues.destinationId ?? "WD0M",
+    checkin: checkin ?? defaultValues.checkin,
+    checkout: checkout ?? defaultValues.checkout,
+    lang: lang ?? defaultValues.lang ?? "en_US",
+    currency: currency ?? defaultValues?.currency ?? "SGD", 
+    countryCode: countryCode ?? defaultValues.countryCode ?? "SG",
+    guests: guests ?? defaultValues.guests ?? "2",
   };
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [hotelData, setHotelData] = useState(passedHotelData || null);
+  const [hotelData, setHotelData] = useState(() => {
+    if (passedHotelData?.rooms?.length > 0) {
+      return { ...passedHotelData, completed: true };
+    }
+    return passedHotelData || null;
+  });
   const [showModal, setShowModal] = useState(false);
   const [failedImages, setFailedImages] = useState(new Set());
 
@@ -714,7 +740,10 @@ const RoomDetails = () => {
                 />
                 {remainingImages > 0 && (
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded">
-                    <span className="text-white text-lg font-semibold drop-shadow">
+                    <span 
+                      className="text-white text-lg font-semibold drop-shadow"
+                      data-testid="gallery-overlay"
+                    >
                       +{remainingImages}
                     </span>
                   </div>
@@ -749,7 +778,11 @@ const RoomDetails = () => {
                 {i > 0 && <Separator />}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">{label}</span>
-                  <span>{val}</span>
+                  <span 
+                    data-testid={label === "Currency" ? "booking-summary-currency" : undefined}
+                  >
+                    {val}
+                  </span>
                 </div>
               </div>
             ))}
@@ -769,6 +802,7 @@ const RoomDetails = () => {
               <button
                 className="absolute top-4 right-4 text-gray-600 hover:text-black"
                 onClick={() => setShowModal(false)}
+                aria-label="Close gallery"
               >
                 <X className="w-6 h-6" />
               </button>
