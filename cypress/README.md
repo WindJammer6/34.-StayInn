@@ -1,4 +1,4 @@
-# Cypress End-to-End System Testing for StayInn
+# Cypress End-to-End Testing for StayInn
 
 This directory contains end-to-end tests for the StayInn hotel booking application using Cypress.
 
@@ -49,10 +49,18 @@ The test suite covers the following areas:
 - Guest rating filtering (single-select radio buttons)
 - Sort functionality and filter combinations
 
-### Room Selection
+### Room Selection and Booking Flow
 - Hotel detail navigation
 - Room selection and quantity adjustment
 - Price calculation
+- Booking page navigation and form testing
+- Guest details and billing address form handling
+
+### Complete Booking and Payment Flow
+- Booking page display and validation
+- Form field testing with flexible selectors
+- Payment integration testing with mock APIs
+- Booking confirmation flow
 
 ### Error Handling
 - API failure scenarios
@@ -67,10 +75,9 @@ The test suite covers the following areas:
 - Page load time validation
 - Lazy loading verification
 
-Note: Booking flow and payment tests have been removed as the booking page functionality is not yet implemented.
-
 ## Configuration
+
 Tests are configured to run against:
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:5174
 - Backend: http://localhost:8080
 - Test data: Singapore hotels with mock API responses
