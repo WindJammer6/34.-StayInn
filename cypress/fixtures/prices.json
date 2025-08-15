@@ -1,0 +1,40 @@
+{
+  "completed": true,
+  "hotels": [
+    {
+      "id": "h1",
+      "lowest_price": 450,
+      "price": 500,
+      "free_cancellation": true,
+      "rooms_available": 5
+    },
+    {
+      "id": "h2", 
+      "lowest_price": 800,
+      "price": 900,
+      "free_cancellation": true,
+      "rooms_available": 3
+    },
+    {
+      "id": "h3",
+      "lowest_price": 380,
+      "price": 420,
+      "free_cancellation": false,
+      "rooms_available": 7
+    },
+    {
+      "id": "h4",
+      "lowest_price": 520,
+      "price": 580,
+      "free_cancellation": true,
+      "rooms_available": 4
+    },
+    {
+      "id": "h5",
+      "lowest_price": 120,
+      "price": 140,
+      "free_cancellation": false,
+      "rooms_available": 10
+    }
+  ]
+}

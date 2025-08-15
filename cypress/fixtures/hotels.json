@@ -1,0 +1,74 @@
+[
+  {
+    "id": "h1",
+    "name": "Marina Bay Sands",
+    "address": "10 Bayfront Avenue, Marina Bay",
+    "rating": 5,
+    "description": "Iconic luxury resort featuring infinity pool, casino, shopping, and stunning city views in Singapore's Marina Bay district.",
+    "trustyou": {
+      "score": {
+        "overall": 85
+      }
+    },
+    "images": [
+      "https://example.com/mbs1.jpg",
+      "https://example.com/mbs2.jpg"
+    ]
+  },
+  {
+    "id": "h2", 
+    "name": "Raffles Hotel Singapore",
+    "address": "1 Beach Road, City Hall",
+    "rating": 5,
+    "description": "Historic colonial-style luxury hotel, famous for inventing the Singapore Sling cocktail and impeccable service.",
+    "trustyou": {
+      "score": {
+        "overall": 92
+      }
+    },
+    "images": [
+      "https://example.com/raffles1.jpg"
+    ]
+  },
+  {
+    "id": "h3",
+    "name": "The Fullerton Hotel Singapore", 
+    "address": "1 Fullerton Square, Downtown Core",
+    "rating": 4,
+    "description": "Heritage luxury hotel housed in a beautifully restored 1928 neoclassical building overlooking Marina Bay.",
+    "trustyou": {
+      "score": {
+        "overall": 88
+      }
+    },
+    "images": []
+  },
+  {
+    "id": "h4",
+    "name": "The Ritz-Carlton, Millenia Singapore",
+    "address": "7 Raffles Avenue, Marina Centre", 
+    "rating": 4,
+    "description": "Luxurious hotel featuring contemporary art collection, Michelin-starred dining, and panoramic city or harbor views.",
+    "trustyou": {
+      "score": {
+        "overall": 89
+      }
+    },
+    "images": [
+      "https://example.com/ritz1.jpg"
+    ]
+  },
+  {
+    "id": "h5",
+    "name": "Budget Inn Singapore",
+    "address": "123 Budget Street, Little India",
+    "rating": 2,
+    "description": "Affordable accommodation with basic amenities, perfect for budget-conscious travelers exploring Singapore.",
+    "trustyou": {
+      "score": {
+        "overall": 65
+      }
+    },
+    "images": []
+  }
+]

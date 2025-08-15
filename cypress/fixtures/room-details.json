@@ -1,0 +1,127 @@
+{
+  "id": "h1",
+  "name": "Marina Bay Sands",
+  "address": "10 Bayfront Avenue, Marina Bay",
+  "rating": 5,
+  "latitude": 1.283611,
+  "longitude": 103.860833,
+  "description": "Iconic luxury resort featuring infinity pool, casino, shopping, and stunning city views.",
+  "image_details": {
+    "count": 5,
+    "prefix": "https://example.com/mbs-",
+    "suffix": ".jpg"
+  },
+  "images": [
+    {
+      "url": "https://example.com/mbs1.jpg",
+      "high_resolution_url": "https://example.com/mbs1-hd.jpg",
+      "alt": "Marina Bay Sands exterior view"
+    }
+  ],
+  "rooms": [
+    {
+      "key": "deluxe-room",
+      "roomDescription": "Deluxe City View Room",
+      "long_description": "<p><strong>Entertainment</strong></p><p>42-inch LCD TV with premium cable channels</p><p><strong>Sleep</strong></p><p>1 king bed or 2 twin beds</p><p><strong>Bathroom</strong></p><p>Marble bathroom with deep soaking tub</p><p><strong>Comfort</strong></p><p>Air conditioning and climate control</p><p><strong>Internet</strong></p><p>Free Wi-Fi throughout the room</p>",
+      "amenities": [
+        "Free Wi-Fi",
+        "Air Conditioning", 
+        "LCD TV",
+        "Mini Bar",
+        "Room Service",
+        "Safe",
+        "Marble Bathroom"
+      ],
+      "price": 450,
+      "converted_price": 450,
+      "currency": "S$",
+      "nightly_price": 450,
+      "rooms_available": 3,
+      "free_cancellation": true,
+      "images": [
+        {
+          "url": "https://example.com/deluxe-room1.jpg",
+          "high_resolution_url": "https://example.com/deluxe-room1-hd.jpg",
+          "alt": "Deluxe room interior"
+        },
+        {
+          "url": "https://example.com/deluxe-room2.jpg", 
+          "high_resolution_url": "https://example.com/deluxe-room2-hd.jpg",
+          "alt": "Deluxe room bathroom"
+        }
+      ],
+      "surcharges": [
+        {
+          "amount": 45.50,
+          "description": "Service charge and taxes"
+        }
+      ],
+      "market_rates": [
+        {
+          "supplier": "Booking.com",
+          "rate": 465.00
+        },
+        {
+          "supplier": "Expedia",
+          "rate": 472.00
+        }
+      ],
+      "roomAdditionalInfo": {
+        "breakfastInfo": "continental_breakfast_included",
+        "displayFields": {
+          "special_check_in_instructions": "<p>Check-in is available 24/7. Please present valid ID and credit card upon arrival.</p>",
+          "know_before_you_go": "<p>Resort fee of S$25 per night applies. Pool access included for all guests.</p>",
+          "fees_optional": "<p>Parking: S$30 per night. Spa services available at additional cost.</p>"
+        }
+      }
+    },
+    {
+      "key": "suite-room",
+      "roomDescription": "Executive Suite",
+      "long_description": "<p><strong>Layout</strong></p><p>Separate living area and bedroom</p><p><strong>Entertainment</strong></p><p>55-inch LED TV in living room, 42-inch TV in bedroom</p><p><strong>Sleep</strong></p><p>1 king bed with premium linens</p><p><strong>Bathroom</strong></p><p>Oversized marble bathroom with rain shower and soaking tub</p>",
+      "amenities": [
+        "Free Wi-Fi",
+        "Executive Lounge Access",
+        "Separate Living Area", 
+        "Premium Linens",
+        "Complimentary Breakfast",
+        "Butler Service",
+        "City View"
+      ],
+      "price": 800,
+      "converted_price": 800,
+      "currency": "S$",
+      "nightly_price": 800,
+      "rooms_available": 1,
+      "free_cancellation": false,
+      "images": [
+        {
+          "url": "https://example.com/suite1.jpg",
+          "high_resolution_url": "https://example.com/suite1-hd.jpg",
+          "alt": "Executive suite living area"
+        }
+      ],
+      "surcharges": [
+        {
+          "amount": 80.00,
+          "description": "Service charge and taxes"
+        }
+      ],
+      "market_rates": [
+        {
+          "supplier": "Hotels.com",
+          "rate": 825.00
+        }
+      ],
+      "roomAdditionalInfo": {
+        "breakfastInfo": "full_breakfast_included",
+        "displayFields": {
+          "special_check_in_instructions": "<p>Executive suite guests enjoy priority check-in at the Executive Lounge on Level 55.</p>",
+          "know_before_you_go": "<p>Executive Lounge access included. Complimentary evening cocktails and canapés.</p>",
+          "fees_optional": "<p>Private butler service included. Additional spa treatments available.</p>"
+        }
+      }
+    }
+  ],
+  "completed": true
+}

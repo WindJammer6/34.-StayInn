@@ -1,0 +1,69 @@
+{
+  "bookings": [
+    {
+      "id": "booking_001",
+      "confirmation_number": "STAY123456",
+      "status": "confirmed",
+      "hotel_name": "Marina Bay Sands",
+      "hotel_address": "10 Bayfront Avenue, Marina Bay",
+      "room_type": "Deluxe City View Room",
+      "check_in": "2025-12-01",
+      "check_out": "2025-12-07", 
+      "guests": 2,
+      "nights": 6,
+      "total_cost": 2700.00,
+      "currency": "SGD",
+      "guest_name": "John Doe",
+      "guest_email": "john.doe@example.com",
+      "booked_date": "2025-08-15",
+      "payment_status": "paid",
+      "cancellation_policy": "Free cancellation until 24 hours before check-in"
+    },
+    {
+      "id": "booking_002", 
+      "confirmation_number": "STAY789012",
+      "status": "pending",
+      "hotel_name": "Raffles Hotel Singapore",
+      "hotel_address": "1 Beach Road, City Hall",
+      "room_type": "Courtyard Suite",
+      "check_in": "2025-09-15",
+      "check_out": "2025-09-18",
+      "guests": 2,
+      "nights": 3,
+      "total_cost": 2400.00,
+      "currency": "SGD",
+      "guest_name": "Jane Smith",
+      "guest_email": "jane.smith@example.com",
+      "booked_date": "2025-08-10",
+      "payment_status": "pending",
+      "cancellation_policy": "Non-refundable"
+    },
+    {
+      "id": "booking_003",
+      "confirmation_number": "STAY345678", 
+      "status": "cancelled",
+      "hotel_name": "The Fullerton Hotel",
+      "hotel_address": "1 Fullerton Square, Downtown Core",
+      "room_type": "Premier Bay View Room",
+      "check_in": "2025-07-01",
+      "check_out": "2025-07-05",
+      "guests": 1,
+      "nights": 4,
+      "total_cost": 1520.00,
+      "currency": "SGD",
+      "guest_name": "Bob Wilson",
+      "guest_email": "bob.wilson@example.com",
+      "booked_date": "2025-06-15",
+      "payment_status": "refunded",
+      "cancellation_policy": "Free cancellation",
+      "cancelled_date": "2025-06-25"
+    }
+  ],
+  "statistics": {
+    "total_bookings": 3,
+    "total_spent": 6620.00,
+    "upcoming_trips": 2,
+    "completed_trips": 0,
+    "cancelled_trips": 1
+  }
+}
