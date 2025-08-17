@@ -421,21 +421,27 @@ describe('BookingPage Component Tests', () => {
   //   });
   // });
 
-  describe('API Integration', () => {
-    it('creates payment intent on component mount', async () => {
-      await renderBookingPage();
-      
-      await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith(
-          'http://localhost:8080/api/create-payment-intent',
-          expect.objectContaining({
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ pricing: { total: '$517.50' } })
-          })
-        );
-      }, {timeout: 10000 });
+    describe('API Integration', () => {
+      it('creates payment intent on component mount', async () => {
+        await renderBookingPage();
+        
+        await waitFor(() => {
+          expect(global.fetch).toHaveBeenCalledWith(
+            'http://localhost:8080/api/create-payment-intent',
+            expect.objectContaining({
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                currency: 'SGD',
+                amount: '500.00'
+              })
+            })
+          );
+        }, { timeout: 10000 });
+      });
     });
+
+
 
     it('handles payment intent creation failure', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -559,4 +565,3 @@ describe('BookingPage Component Tests', () => {
     //   }, {timeout: 10000 });
     // });
   });
-});
