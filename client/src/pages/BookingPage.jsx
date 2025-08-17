@@ -237,8 +237,7 @@ const BookingPage = (props = {}) => {
       });
       if (!response.ok) throw new Error("Booking submission failed");
 
-      const data = await response.json();
-      console.log("Booking submitted:", data);
+      console.log("Booking submitted:");
       alert("Booking completed successfully!");
       props.onSubmit?.(form);
     } catch (error) {

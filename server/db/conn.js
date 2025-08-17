@@ -1,23 +1,29 @@
-require('dotenv').config();
-const MongoClient = require('mongodb').MongoClient;
+require("dotenv").config();
+const { MongoClient } = require("mongodb");
 
 const connection_str = process.env.ATLAS_URI || "";
+const dbName = "BookingRecords";
 
-const client = new MongoClient(connection_str);
-const dbName = 'BookingRecords'
+let client;
+let db = null;
 
-var db = null;
-
-try {
+if (process.env.NODE_ENV !== "test") {
+  try {
+    client = new MongoClient(connection_str);
     client.connect();
     db = client.db(dbName);
-} catch (error) {
+  } catch (error) {
     console.error("database connection failed. " + error);
+  }
+} else {
+  // In test mode, return a dummy object
+  db = {};
 }
 
 async function cleanup() {
-    await client.disconnect();
+  if (client) {
+    await client.close(); // correct method is .close() not .disconnect()
+  }
 }
 
-
-module.exports = { db, cleanup } ;
+module.exports = { db, cleanup };

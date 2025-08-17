@@ -7,7 +7,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const db = require("./db/conn.js").db;
 
 const corsOptions = {
-  origin: [process.env.CLIENT_URL],
+  origin: [process.env.CLIENT_URL]
 };
 
 app.use(cors(corsOptions));
@@ -160,20 +160,32 @@ app.post("/api/create-payment-intent", async (req, res) => {
 
 //mongodb
 app.get("/api/bookingresults", async (req, res) => {
-  let collection = await db.collection("Bookings");
-  let results = await collection.find({}).limit(50).toArray();
-  res.send(results).status(200);
+  try {
+    let collection = await db.collection("Bookings");
+    let results = await collection.find({}).limit(50).toArray();
+    res.status(200).json(results);
+  } catch (error) {
+    console.error("Error fetching booking results:", error);
+    res.status(500).json({ error: "Failed to fetch booking results" });
+  }
 });
 
 app.post("/api/bookings", async (req, res) => {
-  let collection = await db.collection("Bookings");
-  let newDocument = req.body;
-  newDocument.date = new Date();
-  let result = await collection.insertOne(newDocument);
-  res.send(result).status(204);
+  try {
+    let collection = await db.collection("Bookings");
+    let newDocument = req.body;
+    newDocument.date = new Date();
+
+    await collection.insertOne(newDocument);
+    console.log("This is a document", newDocument);
+    // 204 means success but no response body
+    res.status(204).send();
+  } catch (error) {
+    console.error("Error inserting booking:", error);
+    res.status(500).json({ error: "Failed to insert booking" });
+  }
 });
 
-// IMPORTANT: Guard the listener so it doesn't run during tests
 if (process.env.NODE_ENV !== "test") {
   app.listen(process.env.PORT || 8080, () => {
     console.log(`Server started on port ${process.env.PORT || 8080}`);
