@@ -7,10 +7,8 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import RoomDetails from "@/pages/RoomDetails";
 import { vi } from "vitest";
 
-// Mock axios to intercept API requests
 vi.mock("axios");
 
-// Standard test hotel data
 const mockHotelData = {
   name: "Test Hotel",
   image_details: { count: 0 },
@@ -22,7 +20,7 @@ const mockHotelData = {
       long_description: "<p>Test description</p>",
       amenities: ["Free WiFi", "Air Conditioning"],
       nightly_price: 100,
-      price: 700, // default 7 nights * $100
+      price: 700,
       converted_price: 700,
       currency: "$",
       surcharges: [{ description: "Service Fee", amount: 10 }],
@@ -54,12 +52,8 @@ const mockHotelDataWithImages = {
   rooms: [],
 };
 
-const mockHotelDataWithNoRooms = {
-  ...mockHotelData,
-  rooms: [],
-};
+const mockHotelDataWithNoRooms = { ...mockHotelData, rooms: [] };
 
-// Router state
 const state = {
   hotelId: "h1",
   destinationId: "d1",
@@ -118,11 +112,11 @@ describe("RoomDetails Component", () => {
   it("renders hotel room details correctly", async () => {
     axios.get.mockResolvedValueOnce({ data: mockHotelData });
     renderComponent();
-    expect(await screen.findByText("Room 1")).toBeInTheDocument();
+    await screen.findByText("Room 1");
     expect(screen.getByText("Test description")).toBeInTheDocument();
     expect(screen.getByText("Free WiFi")).toBeInTheDocument();
     expect(screen.getByText("Air Conditioning")).toBeInTheDocument();
-    expect(screen.getByText(/\$?700(\.00)?/)).toBeInTheDocument();
+    expect(screen.getByTestId("room-price-1")).toHaveTextContent("$700");
   });
 
   it("renders surcharge and market rate", async () => {
@@ -160,7 +154,6 @@ describe("Edge Cases", () => {
           {
             ...mockHotelData.rooms[0],
             rooms_available: 1,
-            nightly_price: 100,
             price: 100,
             converted_price: 100,
           },
@@ -171,11 +164,12 @@ describe("Edge Cases", () => {
     await screen.findByText("Room 1");
     const inc = await screen.findByRole("button", { name: "+" });
     const dec = await screen.findByRole("button", { name: /^(−|–|-)$/ });
+    expect(screen.getByTestId("room-price-1")).toHaveTextContent("$100");
     const total = screen.getByText(/^Total:/i);
-    expect(total).toHaveTextContent(/\$?100(\.00)?/);
+    expect(total).toHaveTextContent("$100");
     expect(inc).toBeDisabled();
     await userEvent.click(dec);
-    expect(total).toHaveTextContent(/\$?100(\.00)?/);
+    expect(total).toHaveTextContent("$100");
   });
 
   it("increments/decrements when rooms_available = 2 and caps at max", async () => {
@@ -186,7 +180,6 @@ describe("Edge Cases", () => {
           {
             ...mockHotelData.rooms[0],
             rooms_available: 2,
-            nightly_price: 120,
             price: 120,
             converted_price: 120,
           },
@@ -197,13 +190,14 @@ describe("Edge Cases", () => {
     await screen.findByText("Room 1");
     const inc = await screen.findByRole("button", { name: "+" });
     const dec = await screen.findByRole("button", { name: /^(−|–|-)$/ });
+    expect(screen.getByTestId("room-price-1")).toHaveTextContent("$120");
     const total = screen.getByText(/^Total:/i);
-    expect(total).toHaveTextContent(/\$?120(\.00)?/);
+    expect(total).toHaveTextContent("$120");
     await userEvent.click(inc);
-    expect(total).toHaveTextContent(/\$?240(\.00)?/);
+    expect(total).toHaveTextContent("$240");
     expect(inc).toBeDisabled();
     await userEvent.click(dec);
-    expect(total).toHaveTextContent(/\$?120(\.00)?/);
+    expect(total).toHaveTextContent("$120");
   });
 
   it("uses converted_price when price missing", async () => {
@@ -215,7 +209,6 @@ describe("Edge Cases", () => {
             ...mockHotelData.rooms[0],
             price: null,
             converted_price: 88,
-            nightly_price: undefined,
             surcharges: [],
             market_rates: [],
           },
@@ -224,7 +217,7 @@ describe("Edge Cases", () => {
     });
     renderComponent();
     await screen.findByText("Room 1");
-    expect(screen.getByText(/\$?88(\.00)?/)).toBeInTheDocument();
+    expect(screen.getByTestId("room-price-1")).toHaveTextContent("$88");
     expect(
       screen.queryByText(/Taxes & fees included:/i)
     ).not.toBeInTheDocument();
@@ -235,18 +228,13 @@ describe("Edge Cases", () => {
     axios.get.mockResolvedValueOnce({
       data: {
         ...mockHotelData,
-        rooms: [
-          {
-            ...mockHotelData.rooms[0],
-            long_description: "",
-          },
-        ],
+        rooms: [{ ...mockHotelData.rooms[0], long_description: "" }],
       },
     });
     renderComponent();
     await screen.findByText("Room 1");
     expect(screen.getByText("Free WiFi")).toBeInTheDocument();
-    expect(screen.getByText(/\$?700(\.00)?/)).toBeInTheDocument();
+    expect(screen.getByTestId("room-price-1")).toHaveTextContent("$700");
   });
 
   it("computes Booking Summary correctly for guests '2|1|0'", async () => {
@@ -293,7 +281,6 @@ describe("Negative Cases", () => {
             ...mockHotelData.rooms[0],
             price: undefined,
             converted_price: undefined,
-            nightly_price: undefined,
             surcharges: [],
             market_rates: [],
           },
@@ -302,7 +289,7 @@ describe("Negative Cases", () => {
     });
     renderComponent();
     await screen.findByText("Room 1");
-    expect(screen.getByText(/\$?N\/A/)).toBeInTheDocument();
+    expect(screen.getByTestId("room-price-1")).toHaveTextContent("N/A");
     expect(screen.getByText(/^Total:/i)).toHaveTextContent("$0");
   });
 
