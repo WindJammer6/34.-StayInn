@@ -40,7 +40,7 @@ https://github.com/user-attachments/assets/26b7a7ea-df04-44ae-8c38-c17f683e00eb
 
 <br>
 
-**To run the Unit and Integration Testing:**
+**To run the Unit and Integration Testing (using [Vitest](https://vitest.dev/)):**
 1. Ensure you are in the root folder
 2. ```
    npm run test
@@ -48,7 +48,7 @@ https://github.com/user-attachments/assets/26b7a7ea-df04-44ae-8c38-c17f683e00eb
 
 <br>
 
-**To run the System End-to-End Testing:**
+**To run the System End-to-End Testing (using [Cypress](https://www.cypress.io/)):**
 
 Read the README.md in the 'cypress' folder
 
