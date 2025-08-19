@@ -1,6 +1,6 @@
 # 34.-StayInn
-This is Project StayInn, our prototype Hotel Booking Website, with hotel data provided by [Ascenda](https://www.ascenda.com/). 
-Done as part of SUTD's Elements of Software Construction (ESC) module.
+This is Project StayInn, our prototype Hotel Booking Website, with hotel data provided by [Ascenda](https://www.ascenda.com/) (they provided it in the form of API calls, they likely
+removed public access to it immediately after the project). Done as part of SUTD's Elements of Software Construction (ESC) module's requirements.
 
 Credits to all my groupmates who made this project possible:
 - [c-xinghan](https://github.com/c-xinghan)
