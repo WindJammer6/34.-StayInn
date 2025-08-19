@@ -26,6 +26,7 @@ https://github.com/user-attachments/assets/26b7a7ea-df04-44ae-8c38-c17f683e00eb
 <br>
 
 ## How to Run?
+**To run the project:**
 1. ```
    cd client
    npm install
@@ -36,3 +37,24 @@ https://github.com/user-attachments/assets/26b7a7ea-df04-44ae-8c38-c17f683e00eb
    npm install
    npm run dev
    ```
+
+<br>
+
+**To run the Unit and Integration Testing:**
+1. Ensure you are in the root folder
+   ```
+   npm run test
+   ```
+
+<br>
+
+**To run the System End-to-End Testing:**
+
+Read the README.md in the 'cypress' folder
+
+<br>
+
+**To run the Robustness Testing:**
+
+Read the README.md in the 'fuzzing' folder
+
