@@ -23,3 +23,16 @@ Credits to all my groupmates who made this project possible:
 
 https://github.com/user-attachments/assets/26b7a7ea-df04-44ae-8c38-c17f683e00eb
 
+<br>
+
+## How to Run?
+1. ```
+   cd client
+   npm install
+   npm run dev
+   ```
+2. ```
+   cd server
+   npm install
+   npm run dev
+   ```
