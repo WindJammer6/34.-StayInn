@@ -42,7 +42,7 @@ https://github.com/user-attachments/assets/26b7a7ea-df04-44ae-8c38-c17f683e00eb
 
 **To run the Unit and Integration Testing:**
 1. Ensure you are in the root folder
-   ```
+2. ```
    npm run test
    ```
 
