@@ -14,7 +14,7 @@ Credits to all my groupmates who made this project possible:
 <br>
 
 **Various documents relating to the project:**
-- https://drive.google.com/drive/folders/13X0jY_vfBk7C842KMbC674MjJbrTBgHw?usp=sharing
+- https://drive.google.com/drive/folders/1bmfjb8B17mI2Ek-956h2RaoJHdsy2dtz?usp=sharing
 
 <br>
 
